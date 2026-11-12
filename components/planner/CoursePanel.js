@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { Search, X, Check } from "lucide-react";
 import { COURSES } from "@/lib/data";
 import { courseStatus, prereqStatus } from "@/lib/engine";
-import { Tag, HP_STYLE, SP_STYLE, NEUTRAL_TAG, STATUS_STYLE, COURSE_TAG_ON, COURSE_TAG_OFF } from "./shared";
+import { Tag, HP_STYLE, SP_STYLE, NEUTRAL_TAG, STATUS_STYLE, COURSE_TAG_ON, COURSE_TAG_OFF, CourseTags } from "./shared";
 
 const FILTERS = [
   ["all", "All"], ["eligible", "Eligible"], ["core", "CSE core"], ["foundation", "Math and science"], ["gened", "GenEd"], ["elective", "Electives"],
@@ -185,9 +185,10 @@ export default function CoursePanel({ mode, code, plan, verdict, baseline, strat
                   {st.state === "blocked" && <span className="mt-1.5 block text-[11px] text-red-300">needs {st.missingHard.join(", ")}</span>}
 
                   <span className="mt-auto flex flex-wrap gap-1.5 pt-2.5">
-                    {c.lab != null && <span className={c.lab ? COURSE_TAG_ON : COURSE_TAG_OFF} title={c.labDetail || undefined}>{c.lab ? "Lab" : "No lab"}</span>}
-                    {c.project != null && <span className={c.project ? COURSE_TAG_ON : COURSE_TAG_OFF}>{c.project ? "Project" : "No project"}</span>}
-                    {c.assignmentHeavy && <span className={COURSE_TAG_ON} title="Assignment and project intensity score of 8 or more">Assignment-heavy</span>}
+                    <CourseTags c={c} className="contents" />
+                    {c.group === "CSE" && c.lab != null && <span className={c.lab ? COURSE_TAG_ON : COURSE_TAG_OFF} title={c.labDetail || undefined}>{c.lab ? "Lab" : "No lab"}</span>}
+                    {c.group === "CSE" && c.project != null && <span className={c.project ? COURSE_TAG_ON : COURSE_TAG_OFF}>{c.project ? "Project" : "No project"}</span>}
+                    {c.group === "CSE" && c.assignmentHeavy && <span className={COURSE_TAG_ON} title="Assignment and project intensity score of 8 or more">Assignment-heavy</span>}
                   </span>
                 </button>
               </li>
