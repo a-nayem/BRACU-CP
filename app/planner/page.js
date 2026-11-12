@@ -6,7 +6,7 @@ export const metadata = { title: "Course Planner | BRACU CSE Planner" };
 
 export default function PlannerPage() {
   return (
-    <main className="bg-[#030610]">
+    <main className="bg-page">
       <Navbar solid />
       <PlannerApp />
       <Footer />

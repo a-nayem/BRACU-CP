@@ -23,7 +23,7 @@ export default function PlannerApp() {
 
   return (
     <div className="relative mx-auto max-w-7xl px-6 pb-8 pt-28 lg:px-12">
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[600px]" style={{ background: "radial-gradient(60% 60% at 20% 0%, rgba(40,88,168,0.25), transparent 70%)" }} />
+      <div className="planner-glow pointer-events-none absolute inset-x-0 top-0 -z-10 h-[600px]" />
       <header className="max-w-3xl">
         <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">Your course planner</h1>
         <p className="mt-4 text-lg font-light text-gray-400">

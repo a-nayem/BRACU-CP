@@ -1,4 +1,5 @@
 import "./globals.css";
+import { THEME_INIT } from "@/lib/theme";
 
 export const metadata = {
   title: "BRACU CSE Course Planner",
@@ -8,8 +9,9 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link

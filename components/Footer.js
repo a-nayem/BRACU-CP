@@ -44,10 +44,10 @@ export default function Footer() {
   ];
 
   return (
-    <footer ref={footer} id="about" className="relative z-0 overflow-hidden border-t border-slate-900/50 bg-[#030610] pb-8 pt-24">
+    <footer ref={footer} id="about" className="relative z-0 overflow-hidden border-t border-slate-900/50 bg-page pb-8 pt-24">
       <div className="pointer-events-none absolute inset-0 -z-10 flex flex-col items-center justify-end overflow-hidden">
         <div ref={glow} className="footer-glow smooth-transform absolute bottom-[-150px] left-1/2 h-[500px] w-4/5 max-w-[1200px] -translate-x-1/2 rounded-[100%] bg-brand-500 opacity-40 blur-[130px]" />
-        <div ref={text} className="footer-huge-text smooth-transform relative flex w-full translate-y-[18%] items-center justify-center gap-[2vw] text-[17vw] font-black leading-none tracking-tighter text-[#030610]">
+        <div ref={text} className="footer-huge-text smooth-transform relative flex w-full translate-y-[18%] items-center justify-center gap-[2vw] text-[17vw] font-black leading-none tracking-tighter text-page">
           <Logo style={{ width: "13vw", height: "13vw" }} />
           PLANNER
         </div>
@@ -66,7 +66,7 @@ export default function Footer() {
             </h2>
             <Link
               href="/planner/"
-              className="animate-item inline-flex items-center justify-center rounded bg-brand-500 px-8 py-4 text-sm font-bold tracking-widest text-white transition-all duration-300 hover:-translate-y-1 hover:bg-brand-400 hover:shadow-[0_10px_30px_-10px_rgba(40,88,168,0.6)]"
+              className="animate-item inline-flex items-center justify-center rounded bg-brand-500 px-8 py-4 text-sm font-bold tracking-widest text-on-brand transition-all duration-300 hover:-translate-y-1 hover:bg-brand-400 hover:shadow-[0_10px_30px_-10px_rgba(40,88,168,0.6)]"
               style={delay()}
             >
               START PLANNING
@@ -100,7 +100,7 @@ export default function Footer() {
             <a
               href={SITE.linkedin}
               aria-label="LinkedIn"
-              className="ml-2 flex h-9 w-9 items-center justify-center rounded bg-brand-500 text-white transition-all hover:-translate-y-1 hover:bg-brand-400 hover:shadow-[0_4px_15px_-3px_rgba(40,88,168,0.5)]"
+              className="ml-2 flex h-9 w-9 items-center justify-center rounded bg-brand-500 text-on-brand transition-all hover:-translate-y-1 hover:bg-brand-400 hover:shadow-[0_4px_15px_-3px_rgba(40,88,168,0.5)]"
             >
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9.75h4v11.5H3V9.75Zm6.5 0h3.8v1.6h.06c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.77 2.65 4.77 6.1v5.85h-4v-5.2c0-1.24-.02-2.84-1.73-2.84-1.73 0-2 1.35-2 2.75v5.29h-4V9.75Z" /></svg>
             </a>

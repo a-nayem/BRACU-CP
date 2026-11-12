@@ -42,7 +42,7 @@ export default function CoursePicker({ state, patch }) {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
             <input
               value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search a code or name, e.g. CSE221"
-              className="w-full rounded-xl border border-white/10 bg-black/30 py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-500 focus:border-brand-400 focus:outline-none"
+              className="w-full rounded-xl border border-white/10 bg-sunken-2 py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-500 focus:border-brand-400 focus:outline-none"
               aria-label="Search courses"
             />
           </div>
@@ -56,7 +56,7 @@ export default function CoursePicker({ state, patch }) {
           {list.map((c) => {
             const on = done.has(c.code);
             return (
-              <li key={c.code} className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm ${on ? "border-brand-400/40 bg-brand-500/10" : "border-white/5 bg-black/20"}`}>
+              <li key={c.code} className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm ${on ? "border-brand-400/40 bg-brand-500/10" : "border-white/5 bg-sunken"}`}>
                 <input type="checkbox" checked={on} onChange={() => toggle(c.code)} className="h-4 w-4 accent-[#2858a8]" aria-label={`Mark ${c.code} completed`} />
                 <span className="w-16 shrink-0 font-mono text-xs text-brand-300">{c.code}</span>
                 <span className="min-w-0 flex-1 truncate text-slate-200">{c.name}</span>
@@ -66,7 +66,7 @@ export default function CoursePicker({ state, patch }) {
                 {on && (
                   <select
                     value={state.grades[c.code] || ""} onChange={(e) => patch((s) => ({ grades: { ...s.grades, [c.code]: e.target.value } }))}
-                    className="rounded-lg border border-white/10 bg-[#0b111a] px-1.5 py-1 text-xs text-slate-200" aria-label={`Grade for ${c.code}`}
+                    className="rounded-lg border border-white/10 bg-panel px-1.5 py-1 text-xs text-slate-200" aria-label={`Grade for ${c.code}`}
                   >
                     <option value="">Grade</option>
                     {GRADES.map((g) => <option key={g}>{g}</option>)}
@@ -102,7 +102,7 @@ export default function CoursePicker({ state, patch }) {
           <p className="text-xs text-slate-500">{gpa.credits} graded credits</p>
           <label className="mt-4 block text-sm text-slate-400" htmlFor="tgt">Target CGPA</label>
           <input id="tgt" type="number" step="0.05" min="0" max="4" value={target} onChange={(e) => setTarget(e.target.value)}
-            className="mt-1 w-24 rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-sm text-white" />
+            className="mt-1 w-24 rounded-lg border border-white/10 bg-sunken-2 px-2 py-1.5 text-sm text-white" />
           {need !== null && (
             <p className="mt-2 text-sm text-slate-300">
               {need > 4.0 ? "Not reachable on the remaining credits." : need <= 0 ? "Already above target." : <>You need about <span className="font-semibold text-white">{need.toFixed(2)}</span> average on the remaining {remaining} credits.</>}

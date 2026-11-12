@@ -140,12 +140,12 @@ export default function PlanView({ state, patch, skill }) {
 
             <div className="grid grid-cols-3 gap-3 text-center">
               {[["Credits", cur.v.load.credits], ["Avg difficulty", cur.v.load.avg], ["High intensity", cur.v.load.counts.high]].map(([l, v]) => (
-                <div key={l} className="rounded-xl border border-white/5 bg-black/20 p-3"><p className="text-lg font-semibold text-white">{v}</p><p className="text-[11px] text-gray-500">{l}</p></div>
+                <div key={l} className="rounded-xl border border-white/5 bg-sunken p-3"><p className="text-lg font-semibold text-white">{v}</p><p className="text-[11px] text-gray-500">{l}</p></div>
               ))}
             </div>
 
             {active === "cg" && cur.codes.length > 0 && (
-              <p className="rounded-xl border border-white/5 bg-black/20 p-3 text-sm text-gray-300">
+              <p className="rounded-xl border border-white/5 bg-sunken p-3 text-sm text-gray-300">
                 Expected semester GPA: <span className="font-semibold text-white">{(cur.codes.reduce((s, c) => s + expectedGP(c, skill), 0) / cur.codes.length).toFixed(2)}</span>
                 <span className="text-gray-500"> (estimate from difficulty{skill ? " and your CGPA" : ""})</span>
               </p>
@@ -155,7 +155,7 @@ export default function PlanView({ state, patch, skill }) {
               {cur.codes.map((code) => {
                 const c = COURSES[code], st = prereqStatus(code, completed, cur.codes);
                 return (
-                  <li key={code} className="rounded-xl border border-white/5 bg-black/20 p-3">
+                  <li key={code} className="rounded-xl border border-white/5 bg-sunken p-3">
                     <div className="flex items-center gap-3">
                       <span className="w-16 shrink-0 font-mono text-xs text-brand-300">{code}</span>
                       <span className="min-w-0 flex-1 truncate text-sm text-gray-200" title={c.name}>{c.name}</span>
@@ -163,7 +163,7 @@ export default function PlanView({ state, patch, skill }) {
                       <span className="w-8 text-right text-xs text-gray-400">{c.difficulty.toFixed(1)}</span>
                       <select
                         aria-label={`Swap ${code}`} value="" onChange={(e) => e.target.value && setPlan(active, cur.codes.map((x) => (x === code ? e.target.value : x)))}
-                        className="w-20 rounded-lg border border-white/10 bg-[#0b111a] px-1.5 py-1 text-xs text-gray-300"
+                        className="w-20 rounded-lg border border-white/10 bg-panel px-1.5 py-1 text-xs text-gray-300"
                       >
                         <option value="">Swap</option>
                         <optgroup label="Eligible">{options.ok.map((o) => <option key={o.code} value={o.code}>{label(o)}</option>)}</optgroup>
@@ -215,15 +215,15 @@ export default function PlanView({ state, patch, skill }) {
                   {cur.codes.map((code) => {
                     const sl = draftOf(code);
                     return (
-                      <li key={code} className="flex flex-wrap items-center gap-2 rounded-xl border border-white/5 bg-black/20 p-2.5 text-xs">
+                      <li key={code} className="flex flex-wrap items-center gap-2 rounded-xl border border-white/5 bg-sunken p-2.5 text-xs">
                         <span className="w-16 font-mono text-brand-300">{code}</span>
                         {DAYS.map((d) => (
                           <button key={d} onClick={() => setSlot(code, { days: sl.days.includes(d) ? sl.days.filter((x) => x !== d) : [...sl.days, d] })}
                             className={`rounded-md border px-1.5 py-0.5 ${sl.days.includes(d) ? "border-brand-400 bg-brand-500/30 text-white" : "border-white/10 text-gray-400"}`}>{d}</button>
                         ))}
-                        <input type="time" value={sl.start} onChange={(e) => setSlot(code, { start: e.target.value })} aria-label={`${code} start`} className="rounded-md border border-white/10 bg-[#0b111a] px-1.5 py-0.5 text-gray-200" />
+                        <input type="time" value={sl.start} onChange={(e) => setSlot(code, { start: e.target.value })} aria-label={`${code} start`} className="rounded-md border border-white/10 bg-panel px-1.5 py-0.5 text-gray-200" />
                         <span className="text-gray-500">to</span>
-                        <input type="time" value={sl.end} onChange={(e) => setSlot(code, { end: e.target.value })} aria-label={`${code} end`} className="rounded-md border border-white/10 bg-[#0b111a] px-1.5 py-0.5 text-gray-200" />
+                        <input type="time" value={sl.end} onChange={(e) => setSlot(code, { end: e.target.value })} aria-label={`${code} end`} className="rounded-md border border-white/10 bg-panel px-1.5 py-0.5 text-gray-200" />
                       </li>
                     );
                   })}

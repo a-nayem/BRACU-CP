@@ -21,7 +21,7 @@ export default function HeroContent() {
       <motion.h1 variants={item} className="text-5xl font-bold leading-[1.1] tracking-tight text-white md:text-6xl lg:text-[5rem]">
         Plan Your <br /> Smarter <br />
         <span className="relative inline-block">
-          <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-brand-500 to-brand-300 bg-clip-text text-transparent blur-xl mix-blend-screen">
+          <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-brand-500 to-brand-300 bg-clip-text text-transparent opacity-40 blur-xl dark:opacity-100 dark:mix-blend-screen">
             Semesters
           </span>
           <span className="relative bg-gradient-to-r from-brand-400 to-brand-200 bg-clip-text text-transparent">Semesters</span>
@@ -36,14 +36,14 @@ export default function HeroContent() {
       <motion.div variants={item} className="pointer-events-auto mt-10 flex flex-wrap justify-center gap-4 md:justify-start">
         <Link
           href="/planner/"
-          className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-brand-400 px-8 py-4 font-medium text-white shadow-[0_0_20px_rgba(40,88,168,0.45)] transition-all hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(91,139,212,0.6)]"
+          className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#214b91] to-[#4a7fd0] px-8 py-4 font-medium text-on-brand shadow-[0_0_20px_rgba(40,88,168,0.45)] transition-all hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(91,139,212,0.6)]"
         >
           Make a Course Plan
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Link>
         <Link
           href="/#features"
-          className="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-8 py-4 font-medium text-white transition-all hover:bg-white/5"
+          className="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-sunken px-8 py-4 font-medium text-white transition-all hover:bg-white/5"
         >
           Explore Features
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

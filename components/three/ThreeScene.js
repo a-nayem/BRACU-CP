@@ -2,6 +2,7 @@
 import { Component, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
+import { useDark } from "@/lib/theme";
 import Logo3D from "./Logo3D";
 import FloatingParticles from "./FloatingParticles";
 import WireframeTerrain from "./WireframeTerrain";
@@ -14,6 +15,8 @@ class Safe extends Component {
 }
 
 export default function ThreeScene() {
+  const [dark] = useDark();
+  const bg = dark ? "#030610" : "#f5f8fd";
   return (
     <div className="absolute inset-0">
       <Canvas
@@ -22,8 +25,8 @@ export default function ThreeScene() {
         dpr={[1, 2]}
         aria-hidden="true"
       >
-        <color attach="background" args={["#030610"]} />
-        <fog attach="fog" args={["#030610", 8, 30]} />
+        <color attach="background" args={[bg]} />
+        <fog attach="fog" args={[bg, 8, 30]} />
         <ambientLight intensity={0.2} />
         <pointLight position={[10, 10, 10]} intensity={1.5} color="#5b8bd4" />
         <pointLight position={[-10, -10, -10]} intensity={1} color="#2858a8" />
@@ -31,14 +34,14 @@ export default function ThreeScene() {
         <Suspense fallback={null}>
           <Safe><Environment preset="city" /></Safe>
           <Logo3D />
-          <FloatingParticles />
-          <WireframeTerrain />
+          <FloatingParticles dark={dark} />
+          <WireframeTerrain dark={dark} />
         </Suspense>
       </Canvas>
       {/* vignette blending the edges into the page */}
       <div
-        className="pointer-events-none absolute inset-0 shadow-[inset_0_0_150px_rgba(3,6,16,0.9)]"
-        style={{ background: "radial-gradient(circle at 70% 50%, rgba(40,88,168,0.12), transparent 60%)" }}
+        className="pointer-events-none absolute inset-0 shadow-[inset_0_0_150px_rgba(245,248,253,0.95)] dark:shadow-[inset_0_0_150px_rgba(3,6,16,0.9)]"
+        style={{ background: "radial-gradient(circle at 70% 50%, rgba(40,88,168,0.10), transparent 60%)" }}
       />
     </div>
   );

@@ -6,7 +6,7 @@ const CARDS = [
   {
     title: "Make a Course Plan",
     text: "Get four algorithm-built semester plans from your completed courses, then swap any course and see the result change live.",
-    cta: "Start planning", href: "/planner/#plan", rgb: "40, 88, 168", text400: "#5b8bd4", stroke: "#5b8bd4",
+    cta: "Start planning", href: "/planner/#plan", rgb: "40, 88, 168", text400: "#5b8bd4", textLight: "#214b91", stroke: "#5b8bd4",
     art: (
       <g fill="none" strokeWidth="1.8">
         <path className="graphic-path" d="M200 60 L290 110 L200 160 L110 110 Z" />
@@ -18,7 +18,7 @@ const CARDS = [
   {
     title: "Graduation Roadmap",
     text: "Map every remaining semester up to 136 credits, with each term's load balanced and prerequisites in the right order.",
-    cta: "View roadmap", href: "/planner/#roadmap", rgb: "16, 185, 129", text400: "#34d399", stroke: "#34d399",
+    cta: "View roadmap", href: "/planner/#roadmap", rgb: "16, 185, 129", text400: "#34d399", textLight: "#047857", stroke: "#34d399",
     art: (
       <g fill="none" strokeWidth="1.8">
         <path className="guide" d="M60 220 H340 M60 160 H340 M60 100 H340" strokeDasharray="6 8" opacity=".35" />
@@ -30,7 +30,7 @@ const CARDS = [
   {
     title: "Check a Plan",
     text: "Test any set of courses for missing prerequisites, section clashes and an overall load score before you register.",
-    cta: "Check my plan", href: "/planner/#plan", rgb: "245, 158, 11", text400: "#fbbf24", stroke: "#fbbf24",
+    cta: "Check my plan", href: "/planner/#plan", rgb: "245, 158, 11", text400: "#fbbf24", textLight: "#b45309", stroke: "#fbbf24",
     art: (
       <g fill="none" strokeWidth="1.6">
         <circle className="graphic-path" cx="220" cy="150" r="30" />
@@ -45,7 +45,7 @@ const CARDS = [
   {
     title: "CGPA Tracker",
     text: "Enter your grades, see your CGPA, and find out which grades you need to reach a target.",
-    cta: "Track my CGPA", href: "/planner/#cgpa", rgb: "160, 168, 168", text400: "#c8cfcf", stroke: "#c8cfcf",
+    cta: "Track my CGPA", href: "/planner/#cgpa", rgb: "160, 168, 168", text400: "#c8cfcf", textLight: "#4a5b79", stroke: "#a0a8a8",
     art: (
       <g fill="none" strokeWidth="1.6">
         <path className="graphic-path" d="M200 70 L270 110 L270 190 L200 230 L130 190 L130 110 Z" />
@@ -95,11 +95,11 @@ export default function Menu() {
   }, []);
 
   return (
-    <section id="menu" className="relative flex min-h-screen items-center justify-center overflow-x-hidden bg-[#0a0f1c] py-24">
-      <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(circle at 15% 10%, rgba(40,88,168,0.12), transparent 40%), radial-gradient(circle at 85% 90%, rgba(160,168,168,0.06), transparent 40%)" }} />
+    <section id="menu" className="relative flex min-h-screen items-center justify-center overflow-x-hidden bg-page-2 py-24">
+      <div className="menu-bg pointer-events-none absolute inset-0" />
       <div className="relative mx-auto w-full max-w-7xl space-y-12 p-4 sm:space-y-16 sm:p-8 lg:p-12">
         <header className="text-center">
-          <p className="mb-3 text-xl font-medium text-[#94a3b8]">What would you like to do?</p>
+          <p className="mb-3 text-xl font-medium text-gray-400">What would you like to do?</p>
           <h2 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">Pick Your Path</h2>
         </header>
 
@@ -120,13 +120,13 @@ export default function Menu() {
               <div className="relative z-10 flex h-full min-h-[340px] w-full flex-col justify-between p-8 sm:min-h-[380px] sm:w-3/4 sm:p-10 lg:w-2/3">
                 <div>
                   <h3 className="mb-4 text-2xl font-medium text-white sm:text-3xl">{c.title}</h3>
-                  <p className="text-base leading-relaxed text-[#94a3b8] sm:text-lg">{c.text}</p>
+                  <p className="text-base leading-relaxed text-gray-400 sm:text-lg">{c.text}</p>
                 </div>
                 <div className="mt-8">
                   <Link
                     href={c.href}
-                    className="inline-flex items-center gap-2 rounded-full border border-[#1f2b45] bg-[#0a0f1c]/50 px-6 py-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-white/40"
-                    style={{ color: c.text400 }}
+                    className="inline-flex items-center gap-2 rounded-full border border-line bg-page-2/50 px-6 py-3 text-sm font-medium text-[var(--cta-l)] transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400/50 dark:text-[var(--cta)]"
+                    style={{ "--cta": c.text400, "--cta-l": c.textLight }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = `rgba(${c.rgb}, .4)`; e.currentTarget.style.background = `rgba(${c.rgb}, .1)`; }}
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = ""; e.currentTarget.style.background = ""; }}
                   >
@@ -139,7 +139,7 @@ export default function Menu() {
           ))}
         </div>
 
-        <footer className="mx-auto max-w-3xl text-center text-lg leading-relaxed text-[#94a3b8] sm:text-xl">
+        <footer className="mx-auto max-w-3xl text-center text-lg leading-relaxed text-gray-400 sm:text-xl">
           <span className="font-medium tracking-wide text-white">CSE Planner</span> is an unofficial student tool. Prerequisites follow the
           BRACU CSE course list; difficulty scores are estimates, not official ratings.
         </footer>

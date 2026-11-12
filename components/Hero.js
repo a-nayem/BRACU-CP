@@ -5,12 +5,12 @@ import HeroContent from "./HeroContent";
 
 const ThreeScene = dynamic(() => import("./three/ThreeScene"), {
   ssr: false,
-  loading: () => <div className="absolute inset-0 bg-[#030610]" />,
+  loading: () => <div className="absolute inset-0 bg-page" />,
 });
 
 export default function Hero() {
   return (
-    <section id="home" className="relative h-screen min-h-[800px] w-full overflow-hidden bg-[#030610]">
+    <section id="home" className="relative h-screen min-h-[800px] w-full overflow-hidden bg-page">
       <ThreeScene />
       <div className="pointer-events-none absolute inset-0 flex justify-center">
         <div className="mx-auto flex w-full max-w-7xl px-6 lg:px-12">

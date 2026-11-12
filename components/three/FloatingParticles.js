@@ -14,7 +14,7 @@ const DATA = Array.from({ length: COUNT }, () => ({
   p: Math.random() * Math.PI * 2,
 }));
 
-export default function FloatingParticles() {
+export default function FloatingParticles({ dark = true }) {
   const mesh = useRef();
   const group = useRef();
   const dummy = useRef(new THREE.Object3D());
@@ -49,7 +49,11 @@ export default function FloatingParticles() {
     <group ref={group}>
       <instancedMesh ref={mesh} args={[null, null, COUNT]}>
         <icosahedronGeometry args={[1, 0]} />
-        <meshStandardMaterial color="#050a1a" emissive="#2858a8" emissiveIntensity={0.6} roughness={0.1} metalness={0.9} />
+        {dark ? (
+          <meshStandardMaterial color="#050a1a" emissive="#2858a8" emissiveIntensity={0.6} roughness={0.1} metalness={0.9} />
+        ) : (
+          <meshStandardMaterial color="#8fb2e6" emissive="#2858a8" emissiveIntensity={0.12} roughness={0.35} metalness={0.25} transparent opacity={0.6} />
+        )}
       </instancedMesh>
     </group>
   );
