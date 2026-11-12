@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { COURSES, DEGREE } from "@/lib/data";
-import { progress, cgpa } from "@/lib/engine";
+import { progress, cgpa, GRADE_POINTS } from "@/lib/engine";
 import { GRADES } from "./shared";
 
 const FILTERS = [
@@ -52,32 +52,50 @@ export default function CoursePicker({ state, patch }) {
             ))}
           </div>
         </div>
-        <ul className="scroll-thin max-h-[26rem] space-y-1.5 overflow-y-auto pr-1">
+        <ul className="scroll-thin grid max-h-[34rem] grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
           {list.map((c) => {
             const on = done.has(c.code);
+            const hard = c.hard || [];
+            const soft = c.soft || [];
             return (
-              <li key={c.code} className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm ${on ? "border-brand-400/40 bg-brand-500/10" : "border-white/5 bg-sunken"}`}>
-                <input type="checkbox" checked={on} onChange={() => toggle(c.code)} className="h-4 w-4 accent-[#2858a8]" aria-label={`Mark ${c.code} completed`} />
-                <span className="w-16 shrink-0 font-mono text-xs text-brand-300">{c.code}</span>
-                <span className="min-w-0 flex-1 truncate text-slate-200">{c.name}</span>
-                {c.placeholder && <span className="text-[10px] text-amber-300">placeholder</span>}
-                {c.category === "elective" && !c.onOfficialList && <span className="hidden text-[10px] text-slate-500 sm:inline">not on official list</span>}
-                <span className="w-10 shrink-0 text-right text-xs text-slate-400" title="Estimated difficulty">{c.difficulty.toFixed(1)}</span>
-                {on && (
-                  <select
-                    value={state.grades[c.code] || ""} onChange={(e) => patch((s) => ({ grades: { ...s.grades, [c.code]: e.target.value } }))}
-                    className="rounded-lg border border-white/10 bg-panel px-1.5 py-1 text-xs text-slate-200" aria-label={`Grade for ${c.code}`}
-                  >
-                    <option value="">Grade</option>
-                    {GRADES.map((g) => <option key={g}>{g}</option>)}
-                  </select>
-                )}
+              <li key={c.code}>
+                <div
+                  role="button" tabIndex={0} aria-pressed={on} aria-label={`${c.code} ${c.name}, ${on ? "completed" : "not completed"}`}
+                  onClick={() => toggle(c.code)}
+                  onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggle(c.code); } }}
+                  className={`flex h-full min-h-[8.5rem] cursor-pointer flex-col rounded-2xl border p-4 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 ${on ? "border-brand-400/50 bg-brand-500/10" : "border-white/10 bg-sunken hover:border-brand-400/40"}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-mono text-sm font-semibold text-brand-300">{c.code}</span>
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] ${on ? "border-brand-400 bg-brand-500 text-white" : "border-white/20 text-transparent"}`} aria-hidden="true">&#10003;</span>
+                  </div>
+                  <p className="mt-1 text-sm leading-snug text-slate-200">{c.name}</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {hard.map((h) => <span key={"h" + h} className="rounded-md border border-red-400/30 bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-300">HP: {h}</span>)}
+                    {soft.map((h) => <span key={"s" + h} className="rounded-md border border-brand-400/30 bg-brand-500/10 px-1.5 py-0.5 text-[10px] font-medium text-brand-300">SP: {h}</span>)}
+                    {!hard.length && !soft.length && <span className="rounded-md border border-white/10 px-1.5 py-0.5 text-[10px] text-slate-400">No prerequisite</span>}
+                  </div>
+                  <div className="mt-auto flex items-end justify-between gap-2 pt-3">
+                    <span className="text-[11px] text-slate-500" title="Estimated difficulty (1 to 10), not an official rating">{c.credits} cr &middot; difficulty {c.difficulty.toFixed(1)}</span>
+                    {on && (
+                      <select
+                        value={state.grades[c.code] || ""}
+                        onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}
+                        onChange={(e) => patch((s) => ({ grades: { ...s.grades, [c.code]: e.target.value } }))}
+                        className="rounded-lg border border-white/10 bg-panel px-1.5 py-1 text-xs text-slate-200" aria-label={`Grade for ${c.code}`}
+                      >
+                        <option value="">Grade</option>
+                        {GRADES.map((g) => <option key={g} value={g}>{GRADE_POINTS[g].toFixed(1)} ({g})</option>)}
+                      </select>
+                    )}
+                  </div>
+                </div>
               </li>
             );
           })}
-          {!list.length && <li className="p-4 text-center text-sm text-slate-500">No courses match.</li>}
+          {!list.length && <li className="col-span-full p-4 text-center text-sm text-slate-500">No courses match.</li>}
         </ul>
-        <p className="mt-3 text-xs text-slate-500">Tick what you have completed. The number on the right is the estimated difficulty (1 to 10), not an official rating.</p>
+        <p className="mt-3 text-xs text-slate-500">Tap a course to mark it completed, then pick your grade as points and letter, for example 3.7 (A-). Difficulty is an estimate from 1 to 10, not an official rating. HP is a hard prerequisite and SP is a soft one.</p>
       </div>
 
       <div className="min-w-0 space-y-4">
