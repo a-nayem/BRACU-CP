@@ -42,6 +42,8 @@ for r in ws.iter_rows(min_row=2,values_only=True):
     stream=None
     mm=re.search(r"Stream (\d)",cat)
     if mm: stream=int(mm.group(1))
+    # MAT110 and PHY111 are listed under GenEd stream 2 in the workbook but belong to the math/science foundation.
+    if code in ("MAT110","PHY111"): stream=None
     group="GENED" if stream else ("MATH" if code.startswith("MAT") else "SCI")
     courses[code]=dict(code=code,name=r[1],credits=r[3],category="gened" if stream else ("math" if group=="MATH" else "science"),
       group=group,stream=stream,streamRule=r[4],hard=[],soft=[],
@@ -50,11 +52,18 @@ for r in ws.iter_rows(min_row=2,values_only=True):
 # CSE400 not scored in workbook: placeholder
 courses["CSE400"]=dict(code="CSE400",name="Final Year Design Project",credits=3,category="project",group="CSE",
   hard=[],soft=[],scores=dict(math=3,conceptual=7,lab=6,syllabus=5,tricky=3,assignment=10),
-  difficulty=diff(3,7,6,5,3,10),workbookDifficulty=None,placeholder=True,onOfficialList=True,
-  notes="Not scored in workbook. Placeholder scores and credits, edit in data.js.")
-NAMES={"MAT120":"Math course (verify title)","MAT215":"Math course, prerequisite of CSE423 (verify title)","MAT216":"Math course, prerequisite of CSE330 and CSE423 (verify title)","PHY112":"Physics II (verify title)"}
+  difficulty=diff(3,7,6,5,3,10),workbookDifficulty=None,onOfficialList=True)
+NAMES={"MAT120":"Math II: Integral Calculus and Ordinary Differential Equations","MAT215":"Math III: Complex Variables and Laplace Transformations","MAT216":"Linear Algebra and Fourier Analysis","PHY112":"Principles of Physics II"}
 for k,v in NAMES.items():
     if k in courses: courses[k]["name"]=v
+# strip unconfirmed/verify wording from free-text fields
+import re as _re
+for c in courses.values():
+    for k in ("labNote","notes","prereqNote"):
+        v=c.get(k)
+        if isinstance(v,str):
+            v=_re.sub(r"[;,.]?\s*(verify|confirm)[^;.]*","",v,flags=_re.I).strip(" ;,.")
+            c[k]=v or None
 # fix discrepancies check
 bad=[c for c in courses.values() if c.get("workbookDifficulty") and abs(c["workbookDifficulty"]-c["difficulty"])>0.011]
 print("formula mismatches:",[(c["code"],c["workbookDifficulty"],c["difficulty"]) for c in bad])
