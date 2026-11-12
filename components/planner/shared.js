@@ -1,3 +1,5 @@
+import { courseTagList } from "@/lib/courseTags";
+
 export const TAG_STYLE = {
   doable: "bg-emerald-500/10 text-emerald-300 border-emerald-400/30",
   heavy: "bg-amber-500/10 text-amber-300 border-amber-400/30",
@@ -28,6 +30,17 @@ export const STATUS_STYLE = {
 };
 export const COURSE_TAG_ON = "rounded-md border border-amber-400/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-300";
 export const COURSE_TAG_OFF = "rounded-md border border-white/10 px-1.5 py-0.5 text-[10px] text-slate-400";
+
+// Tags for Math, Science and GenEd cards (CSE cards keep their own Lab / Project / Assignment-heavy tags).
+export function CourseTags({ c, className = "mt-2 flex flex-wrap gap-1.5" }) {
+  const list = courseTagList(c);
+  if (!list.length) return null;
+  return (
+    <span className={className}>
+      {list.map(([label, on, title]) => <span key={label} className={on ? COURSE_TAG_ON : COURSE_TAG_OFF} title={title}>{label}</span>)}
+    </span>
+  );
+}
 
 export const DAYS =["Sat", "Sun", "Mon", "Tue", "Wed", "Thu"];
 export const GRADES = ["A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F"];
