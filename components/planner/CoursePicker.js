@@ -76,7 +76,7 @@ export default function CoursePicker({ state, patch }) {
                     {!hard.length && !soft.length && <span className="rounded-md border border-white/10 px-1.5 py-0.5 text-[10px] text-slate-400">No prerequisite</span>}
                   </div>
                   <div className="mt-auto flex items-end justify-between gap-2 pt-3">
-                    <span className="text-[11px] text-slate-500" title="Estimated difficulty (1 to 10), not an official rating">{c.credits} cr &middot; difficulty {c.difficulty.toFixed(1)}</span>
+                    <span className="text-xs font-semibold text-slate-300" title="Estimated difficulty (1 to 10), not an official rating">{c.credits} cr &middot; difficulty {c.difficulty.toFixed(1)}</span>
                     {on && (
                       <select
                         value={state.grades[c.code] || ""}
