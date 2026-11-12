@@ -15,4 +15,4 @@ export function Tag({ v, className = "" }) {
 }
 
 export const DAYS = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu"];
-export const GRADES = ["A", "A-", "B+", "B", "B-", "C+", "C", "D", "F"];
+export const GRADES = ["A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F"];
