@@ -162,6 +162,20 @@ body {
   border: 1px solid var(--panel-edge);
   box-shadow: var(--panel-shadow);
 }
+/* Swap and Add side panel */
+@keyframes side-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes side-out { from { transform: translateX(0); } to { transform: translateX(100%); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
+.side-panel { animation: side-in .28s cubic-bezier(.2,.8,.2,1) both; }
+.side-panel.out { animation: side-out .2s ease-in both; }
+.backdrop-in { animation: fade-in .25s ease both; }
+.backdrop-in.out { animation: fade-out .2s ease both; }
+/* On wide screens the plan window moves left of the panel instead of sitting under it. */
+.plan-shift { transition: padding-right .3s cubic-bezier(.2,.8,.2,1); }
+@media (min-width: 90rem) {
+  .plan-shift.panel-open { padding-right: max(0px, calc(37rem - max(3rem, (100vw - 80rem) / 2 + 3rem))); }
+}
 .acc-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .4s cubic-bezier(.2,.8,.2,1); }
 .acc-body.open { grid-template-rows: 1fr; }
 .acc-body > div { overflow: hidden; }
@@ -169,6 +183,7 @@ body {
 .scroll-thin::-webkit-scrollbar-thumb { background: rgba(120,140,170,0.35); border-radius: 9px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .svc-art, .glass-card { animation: none; }
+  .svc-art, .glass-card, .side-panel, .backdrop-in { animation: none; }
+  .plan-shift { transition: none; }
   .fade-up, .animate-item { transition: none; opacity: 1; transform: none; }
 }
