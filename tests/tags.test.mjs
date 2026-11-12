@@ -12,7 +12,8 @@ test("Math and Science carry a lab tag", () => {
   for (const c of Object.values(COURSES).filter((c) => c.group === "MATH" || c.group === "SCI")) assert.ok(labels(c.code).some((l) => /lab/i.test(l)), c.code);
 });
 test("known GenEd tags render and false shows as No", () => {
-  assert.deepEqual(labels("POL101"), ["Mid", "Final"]);
+  for (const l of ["Assignment", "Mid", "Final"]) assert.ok(labels("POL101").includes(l), l);
+  assert.ok(labels("PSY101").includes("No final"));
   assert.ok(labels("ENG103").includes("Presentation"));
   const c = { group: "GENED", mid: false, final: true, assignment: true };
   assert.deepEqual(courseTagList(c).map((t) => t[0]), ["Assignment", "No mid", "Final"]);
