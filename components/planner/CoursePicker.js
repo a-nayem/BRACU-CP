@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { COURSES, DEGREE } from "@/lib/data";
 import { progress, cgpa, GRADE_POINTS } from "@/lib/engine";
-import { GRADES } from "./shared";
+import { GRADES, CourseTags } from "./shared";
 
 const FILTERS = [
   ["all", "All"], ["core", "CSE core"], ["foundation", "Math and science"], ["gened", "GenEd"], ["elective", "Electives"],
@@ -75,6 +75,7 @@ export default function CoursePicker({ state, patch }) {
                     {soft.map((h) => <span key={"s" + h} className="rounded-md border border-brand-400/30 bg-brand-500/10 px-1.5 py-0.5 text-[10px] font-medium text-brand-300">SP: {h}</span>)}
                     {!hard.length && !soft.length && <span className="rounded-md border border-white/10 px-1.5 py-0.5 text-[10px] text-slate-400">No prerequisite</span>}
                   </div>
+                  <CourseTags c={c} />
                   <div className="mt-auto flex items-end justify-between gap-2 pt-3">
                     <span className="text-xs font-semibold text-slate-300" title="Estimated difficulty (1 to 10), not an official rating">{c.credits} cr &middot; difficulty {c.difficulty.toFixed(1)}</span>
                     {on && (
