@@ -17,9 +17,9 @@ export function Tag({ v, className = "" }) {
 }
 
 // Prerequisite tags, same look as Step 1 (red HP for hard, blue SP for soft).
-export const HP_STYLE = "rounded-md border border-red-400/30 bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-300";
-export const SP_STYLE = "rounded-md border border-brand-400/30 bg-brand-500/10 px-1.5 py-0.5 text-[10px] font-medium text-brand-300";
-export const NEUTRAL_TAG = "rounded-md border border-white/10 px-1.5 py-0.5 text-[10px] text-slate-400";
+export const HP_STYLE = "rounded-md border border-red-400/50 bg-red-500/15 px-2 py-0.5 text-[11px] font-semibold text-red-300";
+export const SP_STYLE = "rounded-md border border-brand-400/50 bg-brand-500/15 px-2 py-0.5 text-[11px] font-semibold text-brand-300";
+export const NEUTRAL_TAG = "rounded-md border border-slate-400/50 bg-slate-500/10 px-2 py-0.5 text-[11px] font-semibold text-slate-200";
 
 // Course status badges and course tags for the Swap and Add panel cards.
 export const STATUS_STYLE = {
@@ -28,8 +28,8 @@ export const STATUS_STYLE = {
   blocked: "border-red-400/30 bg-red-500/10 text-red-300",
   inPlan: "border-brand-400/40 bg-brand-500/15 text-brand-300",
 };
-export const COURSE_TAG_ON = "rounded-md border border-amber-400/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-300";
-export const COURSE_TAG_OFF = "rounded-md border border-white/10 px-1.5 py-0.5 text-[10px] text-slate-400";
+export const COURSE_TAG_ON = "rounded-md border border-amber-400/60 bg-amber-500/20 px-2 py-0.5 text-[11px] font-semibold text-amber-300";
+export const COURSE_TAG_OFF = "rounded-md border border-slate-400/50 bg-slate-500/10 px-2 py-0.5 text-[11px] font-semibold text-slate-200";
 
 // Tags for Math, Science and GenEd cards (CSE cards keep their own Lab / Project / Assignment-heavy tags).
 export function CourseTags({ c, className = "mt-2 flex flex-wrap gap-1.5" }) {
