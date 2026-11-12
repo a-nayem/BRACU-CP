@@ -1,8 +1,20 @@
 "use client";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 import { SITE } from "@/lib/site";
+
+function Instagram(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" />
+    </svg>
+  );
+}
+
+
 
 const Logo = ({ className, style }) => (
   <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round" className={className} style={style} aria-hidden="true">
@@ -38,8 +50,8 @@ export default function Footer() {
   const delay = () => ({ transitionDelay: `${(d += 100)}ms` });
 
   const contacts = [
-    { Icon: Mail, label: "E-mail", value: SITE.email, href: `mailto:${SITE.email}` },
-    { Icon: Phone, label: "Number", value: SITE.phone, href: `tel:${SITE.phone.replace(/\s/g, "")}` },
+    { Icon: Mail, label: "E-mail", value: "Send a message", href: SITE.contactUrl, external: true },
+    { Icon: Instagram, label: "Instagram", value: `@${SITE.instagramUser}`, href: SITE.instagram, external: true },
     { Icon: MapPin, label: "Location", value: SITE.location, href: "#", narrow: true },
   ];
 
@@ -74,8 +86,8 @@ export default function Footer() {
           </div>
 
           <div className="mt-8 flex flex-col justify-center gap-10 lg:mt-0 lg:pl-20 xl:pl-32">
-            {contacts.map(({ Icon, label, value, href, narrow }) => (
-              <a key={label} href={href} className="contact-card animate-item group flex cursor-pointer items-start gap-6" style={delay()}>
+            {contacts.map(({ Icon, label, value, href, narrow, external }) => (
+              <a key={label} href={href} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})} className="contact-card animate-item group flex cursor-pointer items-start gap-6" style={delay()}>
                 <div className="icon-wrapper flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400">
                   <Icon className="h-6 w-6" aria-hidden="true" />
                 </div>
