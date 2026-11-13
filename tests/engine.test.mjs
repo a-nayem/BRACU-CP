@@ -107,3 +107,20 @@ test("roadmap is complete and empty when everything is done", () => {
   const all = first.flatMap((s) => s.courses).concat("CSE400");
   assert.equal(roadmap(all, 14, { targetCredits: 12, maxLoad: 7 }).length, 0);
 });
+
+test("12 semesters from scratch at 4 courses a semester, CSE400 takes a slot in the last 3", () => {
+  const plan = roadmap([], 14, { targetCredits: 12, maxLoad: 7 });
+  assert.equal(plan.length, 12);
+  assert.deepEqual(plan.map((s) => s.courses.length), [4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 2]);
+  assert.deepEqual(plan.slice(-3).map((s) => s.project.part), [1, 2, 3]);
+  assert.ok(plan.slice(0, -3).every((s) => !s.project));
+});
+
+test("5 courses only with CGPA 3.5 and from semester 6", () => {
+  const no = roadmap([], 14, { targetCredits: 15, maxLoad: 7, cgpaOk: false });
+  assert.ok(no.every((s) => s.courses.length <= 4));
+  const yes = roadmap([], 14, { targetCredits: 15, maxLoad: 7, cgpaOk: true });
+  assert.ok(yes.slice(0, 5).every((s) => s.courses.length <= 4));
+  assert.ok(yes.some((s) => s.courses.length === 5));
+  assert.ok(yes.length < no.length);
+});
