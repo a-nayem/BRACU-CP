@@ -11,15 +11,29 @@ const FILTERS = [
 ];
 const STATUS_LABEL = { completed: "Completed", eligible: "Eligible", blocked: "Blocked", inPlan: "In your plan" };
 
+// Lab, Project and Assignment-heavy tags for CSE cards, read from the workbook note and scores. [label, on, tooltip]
+const LAB_YES = ["weekly", "alternate", "3-hour", "lab listed", "lab/", "practical/lab", "indicated"];
+function cseTags(c) {
+  if (c.group !== "CSE") return [];
+  const t = (c.labNote || "").toLowerCase();
+  const lab = c.lab ?? (/no lab|lab not/.test(t) ? false : LAB_YES.some((k) => t.includes(k)) ? true : (c.scores?.lab ?? 0) >= 6);
+  const project = c.project ?? (/project|research/.test(t) ? true : null);
+  const heavy = c.assignmentHeavy ?? (c.scores?.assignment ?? 0) >= 8;
+  const out = [[lab ? "Lab" : "No lab", lab, c.labNote || undefined]];
+  if (project != null) out.push([project ? "Project" : "No project", project]);
+  if (heavy) out.push(["Assignment-heavy", true, "Assignment and project intensity score of 8 or more"]);
+  return out;
+}
+
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 // Right-side panel for the Swap and "+ Add a course" actions in the plan view.
 // Props:
 //   mode "swap" | "add", code (the course being swapped, swap mode only)
 //   plan (course codes in the current plan), verdict (verdict() of that plan), baseline ({ index, credits } when the panel opened)
-//   strategyLabel, completed (Set), includeElectives
+//   strategyLabel, completed (Set), includeElectives, hidden (Set of codes not offered, e.g. from hiddenCodes())
 //   onChange(codes) saves the new plan, onClose()
-export default function CoursePanel({ mode, code, plan, verdict, baseline, strategyLabel, completed, includeElectives, onChange, onClose }) {
+export default function CoursePanel({ mode, code, plan, verdict, baseline, strategyLabel, completed, includeElectives, hidden, onChange, onClose }) {
   const [q, setQ] = useState("");
   const [f, setF] = useState("all");
   const [current, setCurrent] = useState(code); // swap mode: the course that currently fills the swapped slot
@@ -56,9 +70,10 @@ export default function CoursePanel({ mode, code, plan, verdict, baseline, strat
     const rank = (c) => (completed.has(c.code) ? 2 : prereqStatus(c.code, completed, []).ok ? 0 : 1);
     return Object.values(COURSES)
       .filter((c) => includeElectives || c.category !== "elective")
+      .filter((c) => !hidden?.has(c.code))
       .map((c) => ({ c, rank: rank(c) }))
       .sort((a, b) => a.rank - b.rank || a.c.code.localeCompare(b.c.code));
-  }, [completed, includeElectives]);
+  }, [completed, includeElectives, hidden]);
 
   const inFilter = ({ c, rank }) =>
     f === "all" ? true : f === "eligible" ? rank === 0 : f === "core" ? c.category === "core" || c.category === "project"
@@ -186,9 +201,7 @@ export default function CoursePanel({ mode, code, plan, verdict, baseline, strat
 
                   <span className="mt-auto flex flex-wrap gap-1.5 pt-2.5">
                     <CourseTags c={c} className="contents" />
-                    {c.group === "CSE" && c.lab != null && <span className={c.lab ? COURSE_TAG_ON : COURSE_TAG_OFF} title={c.labDetail || undefined}>{c.lab ? "Lab" : "No lab"}</span>}
-                    {c.group === "CSE" && c.project != null && <span className={c.project ? COURSE_TAG_ON : COURSE_TAG_OFF}>{c.project ? "Project" : "No project"}</span>}
-                    {c.group === "CSE" && c.assignmentHeavy && <span className={COURSE_TAG_ON} title="Assignment and project intensity score of 8 or more">Assignment-heavy</span>}
+                    {cseTags(c).map(([label, on, title]) => <span key={label} className={on ? COURSE_TAG_ON : COURSE_TAG_OFF} title={title}>{label}</span>)}
                   </span>
                 </button>
               </li>
