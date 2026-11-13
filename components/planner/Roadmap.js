@@ -13,10 +13,13 @@ export default function Roadmap({ state }) {
   let done = new Set(completed);
   return (
     <div>
-      <p className="mb-6 max-w-2xl text-sm text-gray-400">
+      <p className="mb-2 max-w-2xl text-sm text-gray-400">
         A balanced path, one semester at a time: required courses and the ones that unlock the most later courses come first, with the load kept near 7.0 or
-        below. It stops when no course is eligible, so a short list usually means electives you still need to choose yourself.
+        below. It ends once all 136 credits are covered: one CST course, only the other GenEd the degree needs, and the elective credits that remain.
       </p>
+      {plan.length > 0 && (
+        <p className="mb-6 text-sm text-gray-500">{plan.length} semesters left, {plan.reduce((n, s) => n + s.courses.length * 3, 0)} credits to take.</p>
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {plan.map((s) => {
           const v = verdict(s.courses, done);
