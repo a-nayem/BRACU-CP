@@ -1,10 +1,16 @@
 "use client";
 import { useMemo } from "react";
+import { Check } from "lucide-react";
 import { usePlannerState } from "@/lib/store";
 import { cgpa } from "@/lib/engine";
 import CoursePicker from "./CoursePicker";
 import PlanView from "./PlanView";
 import Roadmap from "./Roadmap";
+
+// Pill buttons for the Step 2 controls. On state uses the same sky blue tint as the filter chips in the course panel.
+const PILL = "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400";
+const PILL_ON = "border-brand-400 bg-brand-500/25 text-white";
+const PILL_OFF = "border-white/10 text-gray-400 hover:border-brand-400/50 hover:text-white";
 
 const Section = ({ id, kicker, title, children }) => (
   <section id={id} className="scroll-mt-24 py-16">
@@ -37,18 +43,21 @@ export default function PlannerApp() {
       </Section>
 
       <Section id="plan" kicker="Step 2" title="Choose a plan for next semester">
-        <div className="mb-8 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-gray-300">
+        <div className="mb-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-gray-300">
           <div className="flex items-center gap-2">
             <span className="text-gray-500">Credits</span>
             {[9, 12, 15].map((n) => (
-              <button key={n} onClick={() => patch({ target: n, edits: {} })} className={`rounded-full border px-3 py-1 ${state.target === n ? "border-brand-400 bg-brand-500/25 text-white" : "border-white/10 text-gray-400 hover:text-white"}`}>{n}</button>
+              <button key={n} onClick={() => patch({ target: n, edits: {} })} aria-pressed={state.target === n} className={`${PILL} ${state.target === n ? PILL_ON : PILL_OFF}`}>{n}</button>
             ))}
           </div>
-          <label className="flex cursor-pointer items-center gap-2">
-            <input type="checkbox" checked={state.electives} onChange={(e) => patch({ electives: e.target.checked, edits: {} })} className="h-4 w-4 accent-[#2858a8]" />
+          <button
+            onClick={() => patch({ electives: !state.electives, edits: {} })} aria-pressed={state.electives}
+            className={`${PILL} ${state.electives ? PILL_ON : PILL_OFF}`}
+          >
+            {state.electives && <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />}
             Include electives
-          </label>
-          <button onClick={() => { if (confirm("Clear everything saved in this browser?")) reset(); }} className="text-gray-500 underline-offset-2 hover:text-white hover:underline">Clear saved data</button>
+          </button>
+          <button onClick={() => { if (confirm("Clear everything saved in this browser?")) reset(); }} className={`${PILL} border-white/10 text-gray-500 hover:border-red-400/40 hover:text-white`}>Clear saved data</button>
         </div>
         {ready && <PlanView state={state} patch={patch} skill={skill} />}
         <p className="mt-6 text-xs text-gray-500">
