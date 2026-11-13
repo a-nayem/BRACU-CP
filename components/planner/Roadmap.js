@@ -13,12 +13,12 @@ const BUCKET_STYLE = {
   Project: "text-fuchsia-300",
 };
 
-export default function Roadmap({ state }) {
+export default function Roadmap({ state, cgpaOk = false, startSemester = 1 }) {
   const eng = !!state.eng102First;
   const completed = useMemo(() => new Set(state.completed), [state.completed]);
   const plan = useMemo(
-    () => roadmap(state.completed, 14, { targetCredits: state.target, maxLoad: ROADMAP_MAX_LOAD, includeElectives: state.electives, eng102First: eng }),
-    [state.completed, state.target, state.electives, eng]
+    () => roadmap(state.completed, 14, { targetCredits: state.target, maxLoad: ROADMAP_MAX_LOAD, includeElectives: state.electives, eng102First: eng, cgpaOk, startSemester }),
+    [state.completed, state.target, state.electives, eng, cgpaOk, startSemester]
   );
   const prog = useMemo(() => progress(state.completed, COURSES, { eng102First: eng }), [state.completed, eng]);
   const left = [
@@ -35,10 +35,11 @@ export default function Roadmap({ state }) {
     <div>
       <p className="mb-2 max-w-2xl text-sm text-gray-400">
         A balanced path built from the official degree plan. Required courses and the ones that unlock the most later courses come first, the load is kept near {ROADMAP_MAX_LOAD.toFixed(1)} or
-        below where possible, and it ends once all {DEGREE.totalCredits} credits are covered. CSE400 (project or thesis) runs across the last 3 semesters and its 4 credits count in full at the end.
+        below where possible, and it ends once all {DEGREE.totalCredits} credits are covered. Four courses a semester is the normal pace. Five are only planned from semester 6 onward
+        and only with a CGPA of 3.5 or higher. CSE400 (project or thesis) takes one course slot in each of the last 3 semesters and its 4 credits count in full at the end.
       </p>
       {plan.length > 0 && (
-        <p className="mb-4 text-sm text-gray-500">{plan.length} semesters left, {planCredits} credits to take.</p>
+        <p className="mb-4 text-sm text-gray-500">{plan.length} semesters left (semester {plan[0].semester} to {plan[plan.length - 1].semester}), {planCredits} credits to take.</p>
       )}
       <ul className="mb-6 flex flex-wrap gap-2 text-xs">
         {left.map(([name, cr]) => (
@@ -74,7 +75,8 @@ export default function Roadmap({ state }) {
               </ul>
               <p className="mt-3 text-xs text-gray-500">
                 {v ? `load ${v.load.index} · ${v.load.credits} credits` : "No other courses"}
-                {s.project?.part === s.project?.of ? " · CSE400 credited (4 cr)" : ""}
+                {s.project && s.project.part !== s.project.of ? " · CSE400 in progress" : ""}
+                {s.project && s.project.part === s.project.of ? " · CSE400 credited (4 cr)" : ""}
               </p>
             </div>
           );
