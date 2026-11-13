@@ -4,7 +4,6 @@ import { roadmap, verdict, progress, bucketOf } from "@/lib/engine";
 import { COURSES, DEGREE } from "@/lib/data";
 import { Tag } from "./shared";
 
-const ROADMAP_MAX_LOAD = 7.0;
 const BUCKET_STYLE = {
   "Program core": "text-brand-300",
   "School core": "text-sky-300",
@@ -13,12 +12,12 @@ const BUCKET_STYLE = {
   Project: "text-fuchsia-300",
 };
 
-export default function Roadmap({ state, cgpaOk = false, startSemester = 1 }) {
+export default function Roadmap({ state, cgpaOk = false, startSemester = 1, residential = null }) {
   const eng = !!state.eng102First;
   const completed = useMemo(() => new Set(state.completed), [state.completed]);
   const plan = useMemo(
-    () => roadmap(state.completed, 14, { targetCredits: state.target, maxLoad: ROADMAP_MAX_LOAD, includeElectives: state.electives, eng102First: eng, cgpaOk, startSemester }),
-    [state.completed, state.target, state.electives, eng, cgpaOk, startSemester]
+    () => roadmap(state.completed, 14, { targetCredits: state.target, includeElectives: state.electives, eng102First: eng, cgpaOk, startSemester, residential }),
+    [state.completed, state.target, state.electives, eng, cgpaOk, startSemester, residential]
   );
   const prog = useMemo(() => progress(state.completed, COURSES, { eng102First: eng }), [state.completed, eng]);
   const left = [
@@ -34,12 +33,14 @@ export default function Roadmap({ state, cgpaOk = false, startSemester = 1 }) {
   return (
     <div>
       <p className="mb-2 max-w-2xl text-sm text-gray-400">
-        A balanced path built from the official degree plan. Required courses and the ones that unlock the most later courses come first, the load is kept near {ROADMAP_MAX_LOAD.toFixed(1)} or
-        below where possible, and it ends once all {DEGREE.totalCredits} credits are covered. Four courses a semester is the normal pace. Five are only planned from semester 6 onward
+        A balanced path built from the official degree plan. Required courses and the ones that unlock the most later courses come first, semesters are kept Do-able
+        (pressure 6.0 or lower) whenever a plan can still finish on time. Heavy pressure is used only when no lighter plan fits, and every semester shows its pressure score out of 10.
+        It ends once all {DEGREE.totalCredits} credits are covered. Four courses a semester is the normal pace. Five are only planned from semester 6 onward
         and only with a CGPA of 3.5 or higher. CSE400 (project or thesis) takes one course slot in each of the last 3 semesters and its 4 credits count in full at the end.
       </p>
       {plan.length > 0 && (
-        <p className="mb-4 text-sm text-gray-500">{plan.length} semesters left (semester {plan[0].semester} to {plan[plan.length - 1].semester}), {planCredits} credits to take.</p>
+        <p className="mb-4 text-sm text-gray-500">{plan.length} semesters left (semester {plan[0].semester} to {plan[plan.length - 1].semester}), {planCredits} credits to take.
+          {plan.some((s) => s.pressure > 6) ? ` ${plan.filter((s) => s.pressure > 6).length} of them are above 6.0 because no lighter plan finishes on time.` : " Every semester is Do-able."}</p>
       )}
       <ul className="mb-6 flex flex-wrap gap-2 text-xs">
         {left.map(([name, cr]) => (
@@ -54,7 +55,7 @@ export default function Roadmap({ state, cgpaOk = false, startSemester = 1 }) {
           s.courses.forEach((c) => (done = new Set([...done, c])));
           return (
             <div key={s.semester} className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-              <div className="mb-3 flex items-center justify-between"><h4 className="font-medium text-white">Semester {s.semester}</h4>{v && <Tag v={v} />}</div>
+              <div className="mb-3 flex items-center justify-between"><h4 className="font-medium text-white">Semester {s.semester}{s.residential && <span className="ml-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 align-middle text-[10px] font-medium text-emerald-300">Residential</span>}</h4>{v && <Tag v={v} />}</div>
               <ul className="space-y-1.5 text-sm">
                 {s.courses.map((c) => {
                   const b = bucketOf(c);
@@ -74,7 +75,7 @@ export default function Roadmap({ state, cgpaOk = false, startSemester = 1 }) {
                 )}
               </ul>
               <p className="mt-3 text-xs text-gray-500">
-                {v ? `load ${v.load.index} · ${v.load.credits} credits` : "No other courses"}
+                {v ? `pressure ${s.pressure} / 10 · ${v.load.credits} credits` : "No other courses"}
                 {s.project && s.project.part !== s.project.of ? " · CSE400 in progress" : ""}
                 {s.project && s.project.part === s.project.of ? " · CSE400 credited (4 cr)" : ""}
               </p>
