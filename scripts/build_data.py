@@ -13,47 +13,6 @@ OFFICIAL={
 "CSE421":([],["CSE320"]),"CSE422":(["CSE221"],[]),"CSE423":(["MAT216"],[]),"CSE460":(["CSE260"],[]),
 "CSE461":(["CSE260","CSE341","CSE360"],[]),"CSE470":(["CSE370"],[]),"CSE471":(["CSE370"],[]),
 }
-# ---- Lab, project and assignment fields ----
-# CSE courses: read from the workbook's lab status text. When the text does not settle it, a lab score of
-# LAB_SCORE_MIN or more counts as a lab. Non-CSE courses have no lab text, so they stay null (no tag shown)
-# until you fill MANUAL_LAB / MANUAL_PROJECT with True or False per course code.
-LAB_TEXT_YES=("weekly","alternate","3-hour","lab listed","lab/","practical/lab","indicated")
-LAB_SCORE_MIN=6
-ASSIGNMENT_HEAVY_MIN=8
-MANUAL_LAB={"CSE400":False}
-MANUAL_PROJECT={"CSE400":True}
-
-def lab_detail(t,has):
-    if not has: return "No lab"
-    if "optional" in t: return "Optional lab (CCNA pathway)"
-    hrs="3-hour " if "3-hour" in t else ""
-    if "differ" in t: freq=""
-    elif "alternate" in t: freq="alternate-week "
-    elif "weekly" in t: freq="weekly "
-    else: freq=""
-    s=(freq+hrs+"lab").strip()
-    return s[0].upper()+s[1:]
-
-def apply_fields(c):
-    """Return a copy of course c where labNote is replaced by lab, labDetail, project and assignmentHeavy."""
-    code=c["code"]; is_cse=c.get("group")=="CSE"; t=(c.get("labNote") or "").lower()
-    if code in MANUAL_LAB: lab=MANUAL_LAB[code]
-    elif not is_cse: lab=None
-    elif t.startswith("no lab"): lab=False
-    elif any(k in t for k in LAB_TEXT_YES): lab=True
-    else: lab=c["scores"]["lab"]>=LAB_SCORE_MIN
-    if code in MANUAL_PROJECT: project=MANUAL_PROJECT[code]
-    elif not is_cse: project=None
-    else: project="project" in t
-    new=dict(lab=lab,labDetail=None if lab is None else lab_detail(t,lab),project=project,
-             assignmentHeavy=c["scores"]["assignment"]>=ASSIGNMENT_HEAVY_MIN)
-    out={}
-    for k,v in c.items():
-        if k=="labNote": out.update(new)
-        else: out[k]=v
-    if "lab" not in out: out.update(new)
-    return out
-
 W=dict(m=.20,c=.20,l=.15,s=.15,t=.15,a=.15)
 def diff(m,c,l,s,t,a): return round(W['m']*m+W['c']*c+W['l']*l+W['s']*s+W['t']*t+W['a']*a,2)
 
@@ -91,18 +50,21 @@ for r in ws.iter_rows(min_row=2,values_only=True):
       scores=dict(math=m,conceptual=c,lab=l,syllabus=s,tricky=t,assignment=a),
       difficulty=diff(m,c,l,s,t,a), workbookDifficulty=r[11], notes=r[12], onOfficialList=False)
 # CSE400 not scored in workbook: placeholder
-courses["CSE400"]=dict(code="CSE400",name="Final Year Design Project",credits=3,category="project",group="CSE",
+courses["CSE400"]=dict(code="CSE400",name="Project and Thesis",credits=4,category="project",group="CSE",
   hard=[],soft=[],scores=dict(math=3,conceptual=7,lab=6,syllabus=5,tricky=3,assignment=10),
   difficulty=diff(3,7,6,5,3,10),workbookDifficulty=None,onOfficialList=True)
-NAMES={"MAT120":"Math II: Integral Calculus and Ordinary Differential Equations","MAT215":"Math III: Complex Variables and Laplace Transformations","MAT216":"Linear Algebra and Fourier Analysis","PHY112":"Principles of Physics II"}
+NAMES={"MAT120":"Math II: Integral Calculus and Differential Equations","MAT215":"Math III: Complex Variables and Laplace Transformations","MAT216":"Math IV: Linear Algebra and Fourier Analysis","PHY112":"Principles of Physics II"}
 for k,v in NAMES.items():
     if k in courses: courses[k]["name"]=v
-# Replace the free-text labNote with clean Lab and Project fields (used by the Swap and Add panel).
-courses={k:apply_fields(v) for k,v in courses.items()}
-# strip unconfirmed/verify wording from the remaining free-text fields
+# Humanities: the degree plan asks for one course from an approved list. One stand-in entry (scored like HUM103) lets a student record it.
+_h=courses["HUM103"]
+courses["HUM-ELEC"]=dict(code="HUM-ELEC",name="Humanities course (one from the approved list)",credits=3,category="gened",group="GENED",stream=3,
+  streamRule=_h.get("streamRule"),hard=[],soft=[],scores=dict(_h["scores"]),difficulty=_h["difficulty"],workbookDifficulty=None,notes=None,onOfficialList=True,
+  choices=["HUM101","HUM102","HST102","HST103","HST104","HUM104","HUM110","HUM201","HUM207","HUM210","HUM301","ENG110","ENG113","ENG114","ENG115","ENG333"])
+# strip unconfirmed/verify wording from free-text fields
 import re as _re
 for c in courses.values():
-    for k in ("notes","prereqNote"):
+    for k in ("labNote","notes","prereqNote"):
         v=c.get(k)
         if isinstance(v,str):
             v=_re.sub(r"[;,.]?\s*(verify|confirm)[^;.]*","",v,flags=_re.I).strip(" ;,.")
