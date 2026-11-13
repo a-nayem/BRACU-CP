@@ -1,10 +1,9 @@
 "use client";
 import { useMemo, useState } from "react";
-import { ChevronDown, Leaf, Flame, Target, Dices, X, Plus, ArrowLeftRight, AlertTriangle, AlertCircle, RotateCcw, Clock } from "lucide-react";
+import { ChevronDown, Leaf, Flame, Target, Dices, X, Plus, AlertTriangle, AlertCircle, RotateCcw, Clock } from "lucide-react";
 import { COURSES } from "@/lib/data";
-import { planStrategies, verdict, unlockStats, prereqStatus, expectedGP, STRATEGIES } from "@/lib/engine";
+import { planStrategies, verdict, unlockStats, prereqStatus, expectedGP, STRATEGIES, hiddenCodes } from "@/lib/engine";
 import { Tag, TAG_BAR, DAYS } from "./shared";
-import CoursePanel from "./CoursePanel";
 
 const META = {
   sustainable: {
@@ -14,8 +13,8 @@ const META = {
   },
   heavy: {
     Icon: Flame, key: "heavy",
-    note: "Keeps your credit target but accepts a load up to 9.0 to clear required courses fastest. Expect overlapping labs and exams and very little slack.",
-    words: ["fast track", "required first", "high load", "little slack"],
+    note: "Adds an extra course and accepts a load up to 9.0 to clear required courses fastest. Expect overlapping labs and exams and very little slack.",
+    words: ["fast track", "most credits", "high load", "little slack"],
   },
   cg: {
     Icon: Target, key: "cg",
@@ -33,13 +32,12 @@ const ORDER = ["sustainable", "cg", "heavy", "risky"];
 export default function PlanView({ state, patch, skill }) {
   const [active, setActive] = useState("sustainable");
   const [showSlots, setShowSlots] = useState(false);
-  const [panel, setPanel] = useState(null); // { mode: "swap" | "add", code, baseline } while the side panel is open
   const completed = useMemo(() => new Set(state.completed), [state.completed]);
   const stats = useMemo(() => unlockStats(), []);
 
   const suggested = useMemo(
-    () => planStrategies({ completed, targetCredits: state.target, includeElectives: state.electives, skill }),
-    [completed, state.target, state.electives, skill]
+    () => planStrategies({ completed, targetCredits: state.target, includeElectives: state.electives, skill, eng102First: !!state.eng102First }),
+    [completed, state.target, state.electives, skill, state.eng102First]
   );
   const planOf = (k) => state.edits[k] ?? suggested[k] ?? [];
   const info = useMemo(() => {
@@ -59,9 +57,17 @@ export default function PlanView({ state, patch, skill }) {
   const edited = state.edits[active] !== undefined;
   const meta = META[active];
 
-  // The side panel remembers the load when it opened, so its summary can show the change ("6.1 to 6.8").
-  const openPanel = (mode, code) => setPanel({ mode, code, baseline: { index: cur.v.load.index, credits: cur.v.load.credits } });
+  const options = useMemo(() => {
+    const inPlan = new Set(cur.codes);
+    const hid = hiddenCodes(!!state.eng102First);
+    const all = Object.values(COURSES).filter((c) => !hid.has(c.code) && !completed.has(c.code) && !inPlan.has(c.code) && c.category !== "elective" || (state.electives && !completed.has(c.code) && !inPlan.has(c.code)));
+    const ok = [], blocked = [];
+    for (const c of all) (prereqStatus(c.code, completed, [...cur.codes, c.code]).ok ? ok : blocked).push(c);
+    const byCode = (a, b) => a.code.localeCompare(b.code);
+    return { ok: ok.sort(byCode), blocked: blocked.sort(byCode) };
+  }, [cur.codes, completed, state.electives, state.eng102First]);
 
+  const label = (c) => `${c.code} - ${c.name}`;
   const slotOf = (code) => state.slots[code]?.[0] || { days: [], start: "", end: "" };
   const setSlot = (code, p) =>
     patch((s) => {
@@ -74,7 +80,7 @@ export default function PlanView({ state, patch, skill }) {
   const draftOf = (code) => state.draft?.[code] || slotOf(code);
 
   return (
-    <div className={`plan-shift grid items-start gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12 ${panel ? "panel-open" : ""}`}>
+    <div className="grid items-start gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12">
       {/* Left: accordion */}
       <div className="min-w-0">
         <ul className="space-y-3">
@@ -156,12 +162,14 @@ export default function PlanView({ state, patch, skill }) {
                       <span className="min-w-0 flex-1 truncate text-sm text-gray-200" title={c.name}>{c.name}</span>
                       <span className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-white/10 sm:block"><span className="block h-full bg-brand-400" style={{ width: `${c.difficulty * 10}%` }} /></span>
                       <span className="w-8 text-right text-xs text-gray-400">{c.difficulty.toFixed(1)}</span>
-                      <button
-                        onClick={() => openPanel("swap", code)} aria-label={`Swap ${code}`}
-                        className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-panel px-2 py-1 text-xs text-gray-300 hover:border-brand-400/50 hover:text-white"
+                      <select
+                        aria-label={`Swap ${code}`} value="" onChange={(e) => e.target.value && setPlan(active, cur.codes.map((x) => (x === code ? e.target.value : x)))}
+                        className="w-20 rounded-lg border border-white/10 bg-panel px-1.5 py-1 text-xs text-gray-300"
                       >
-                        <ArrowLeftRight className="h-3 w-3" aria-hidden="true" /> Swap
-                      </button>
+                        <option value="">Swap</option>
+                        <optgroup label="Eligible">{options.ok.map((o) => <option key={o.code} value={o.code}>{label(o)}</option>)}</optgroup>
+                        <optgroup label="Prerequisite missing">{options.blocked.map((o) => <option key={o.code} value={o.code}>{label(o)}</option>)}</optgroup>
+                      </select>
                       <button onClick={() => setPlan(active, cur.codes.filter((x) => x !== code))} aria-label={`Remove ${code}`} className="text-gray-500 hover:text-red-300"><X className="h-4 w-4" /></button>
                     </div>
                     {(!st.ok || st.missingSoft.length > 0) && (
@@ -177,12 +185,14 @@ export default function PlanView({ state, patch, skill }) {
             </ul>
 
             <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => openPanel("add")}
-                className="inline-flex min-w-0 max-w-full flex-1 items-center gap-1.5 rounded-xl border border-dashed border-white/20 bg-transparent px-3 py-2 text-left text-sm text-gray-300 hover:border-brand-400/60 hover:text-white"
+              <select
+                aria-label="Add a course" value="" onChange={(e) => e.target.value && setPlan(active, [...cur.codes, e.target.value])}
+                className="min-w-0 max-w-full flex-1 rounded-xl border border-dashed border-white/20 bg-transparent px-3 py-2 text-sm text-gray-300"
               >
-                <Plus className="h-4 w-4 shrink-0" aria-hidden="true" /> Add a course
-              </button>
+                <option value="">+ Add a course</option>
+                <optgroup label="Eligible">{options.ok.map((o) => <option key={o.code} value={o.code}>{label(o)}</option>)}</optgroup>
+                <optgroup label="Prerequisite missing">{options.blocked.map((o) => <option key={o.code} value={o.code}>{label(o)}</option>)}</optgroup>
+              </select>
               {edited && (
                 <button onClick={() => reset(active)} className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-sm text-gray-300 hover:bg-white/5">
                   <RotateCcw className="h-4 w-4" /> Reset to suggestion
@@ -224,15 +234,6 @@ export default function PlanView({ state, patch, skill }) {
           </div>
         </div>
       </div>
-
-      {panel && (
-        <CoursePanel
-          mode={panel.mode} code={panel.code} baseline={panel.baseline}
-          plan={cur.codes} verdict={cur.v} strategyLabel={STRATEGIES[active].label}
-          completed={completed} includeElectives={state.electives}
-          onChange={(codes) => setPlan(active, codes)} onClose={() => setPanel(null)}
-        />
-      )}
     </div>
   );
 }
