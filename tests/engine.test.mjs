@@ -62,3 +62,48 @@ test("four strategies are produced and each is a valid size", () => {
   for (const k of Object.keys(plans)) assert.ok(plans[k].length >= 3, k);
   assert.ok(DEGREE.totalCredits === 136);
 });
+
+import { progress, hiddenCodes, bucketOf } from "../lib/engine.js";
+
+test("degree buckets add up to 136 and MAT110/PHY111 count inside GenEd", () => {
+  const p = progress([]);
+  assert.equal(p.core.total + p.foundation.total + p.gened.total + p.electives.total + p.project.total, 136);
+  assert.equal(p.project.total, 4);
+  assert.equal(progress(["MAT110", "PHY111"]).gened.done, 6);
+  assert.equal(progress(["MAT110", "PHY111"]).foundation.done, 0);
+  assert.equal(bucketOf("MAT110"), "GenEd");
+  assert.equal(bucketOf("MAT215"), "School core");
+});
+
+test("ENG103 is only for ENG102 freshers who skip ENG101", () => {
+  assert.ok(hiddenCodes(false).has("ENG103") && !hiddenCodes(false).has("ENG101"));
+  assert.ok(hiddenCodes(true).has("ENG101") && !hiddenCodes(true).has("ENG103"));
+  assert.deepEqual(progress([], undefined, { eng102First: true }).gened.streams[1].fixed, ["ENG102", "ENG103"]);
+  assert.deepEqual(progress([]).gened.streams[1].fixed, ["ENG102", "ENG101"]);
+});
+
+test("CSE101 is never suggested", () => {
+  const plan = roadmap([], 14, { targetCredits: 12, maxLoad: 7, includeElectives: true });
+  assert.ok(plan.every((s) => !s.courses.includes("CSE101")));
+  const strat = planStrategies({ completed: new Set(), targetCredits: 12, includeElectives: true });
+  assert.ok(Object.values(strat).every((l) => !l.includes("CSE101")));
+});
+
+test("roadmap covers exactly 136 credits and runs CSE400 over the last 3 semesters", () => {
+  for (const eng of [false, true]) {
+    const plan = roadmap([], 14, { targetCredits: 12, maxLoad: 7, eng102First: eng });
+    const codes = plan.flatMap((s) => s.courses);
+    assert.equal(new Set(codes).size, codes.length);
+    const credits = codes.reduce((n, c) => n + COURSES[c].credits, 0) + 4;
+    assert.equal(credits, 136);
+    assert.ok(codes.includes(eng ? "ENG103" : "ENG101") && !codes.includes(eng ? "ENG101" : "ENG103"));
+    assert.deepEqual(plan.filter((s) => s.project).map((s) => s.project.part), [1, 2, 3]);
+    assert.deepEqual(plan.slice(-3).map((s) => !!s.project), [true, true, true]);
+  }
+});
+
+test("roadmap is complete and empty when everything is done", () => {
+  const first = roadmap([], 14, { targetCredits: 12, maxLoad: 7 });
+  const all = first.flatMap((s) => s.courses).concat("CSE400");
+  assert.equal(roadmap(all, 14, { targetCredits: 12, maxLoad: 7 }).length, 0);
+});
