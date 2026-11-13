@@ -2,7 +2,8 @@
 import { useMemo } from "react";
 import { Check } from "lucide-react";
 import { usePlannerState } from "@/lib/store";
-import { cgpa } from "@/lib/engine";
+import { cgpa, progress } from "@/lib/engine";
+import { COURSES } from "@/lib/data";
 import CoursePicker from "./CoursePicker";
 import PlanView from "./PlanView";
 import Roadmap from "./Roadmap";
@@ -22,10 +23,13 @@ const Section = ({ id, kicker, title, children }) => (
 
 export default function PlannerApp() {
   const { state, patch, reset, ready } = usePlannerState();
-  const skill = useMemo(() => {
-    const g = cgpa(state.completed.filter((c) => state.grades[c]).map((c) => ({ code: c, grade: state.grades[c] })));
-    return g.credits ? (g.cgpa - 3.0) * 0.3 : 0;
-  }, [state.completed, state.grades]);
+  const g = useMemo(() => cgpa(state.completed.filter((c) => state.grades[c]).map((c) => ({ code: c, grade: state.grades[c] }))), [state.completed, state.grades]);
+  const skill = g.credits ? (g.cgpa - 3.0) * 0.3 : 0;
+  // Semesters already done are estimated at 12 credits each. Five courses need CGPA 3.5+ and are allowed from semester 6.
+  const semDone = useMemo(() => Math.round(progress(state.completed, COURSES, { eng102First: !!state.eng102First }).earned / 12), [state.completed, state.eng102First]);
+  const cgpaOk = g.credits > 0 && g.cgpa >= 3.5;
+  const fiveNow = cgpaOk && semDone + 1 > 5;
+  const view = state.target === 15 && !fiveNow ? { ...state, target: 12 } : state;
 
   return (
     <div className="relative mx-auto max-w-7xl px-6 pb-8 pt-28 lg:px-12">
@@ -46,9 +50,14 @@ export default function PlannerApp() {
         <div className="mb-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-gray-300">
           <div className="flex items-center gap-2">
             <span className="text-gray-500">Credits</span>
-            {[9, 12, 15].map((n) => (
-              <button key={n} onClick={() => patch({ target: n, edits: {} })} aria-pressed={state.target === n} className={`${PILL} ${state.target === n ? PILL_ON : PILL_OFF}`}>{n}</button>
-            ))}
+            {[9, 12, 15].map((n) => {
+              const locked = n === 15 && !cgpaOk;
+              return (
+                <button key={n} disabled={locked} title={locked ? "5 courses need a CGPA of 3.5 or higher (enter your grades in Step 1)" : undefined}
+                  onClick={() => patch({ target: n, edits: {} })} aria-pressed={state.target === n}
+                  className={`${PILL} ${state.target === n ? PILL_ON : PILL_OFF} ${locked ? "cursor-not-allowed opacity-40" : ""}`}>{n}</button>
+              );
+            })}
           </div>
           <button
             onClick={() => patch({ electives: !state.electives, edits: {} })} aria-pressed={state.electives}
@@ -59,7 +68,11 @@ export default function PlannerApp() {
           </button>
           <button onClick={() => { if (confirm("Clear everything saved in this browser?")) reset(); }} className={`${PILL} border-white/10 text-gray-500 hover:border-red-400/40 hover:text-white`}>Clear saved data</button>
         </div>
-        {ready && <PlanView state={state} patch={patch} skill={skill} />}
+        <p className="-mt-4 mb-6 text-xs text-gray-500">
+          4 courses (12 credits) is the normal load. 5 courses (15 credits) need a CGPA of 3.5 or higher and are only allowed from semester 6.
+          {state.target === 15 && !fiveNow && cgpaOk ? ` You are planning semester ${semDone + 1}, so this plan uses 12 credits.` : ""}
+        </p>
+        {ready && <PlanView state={view} patch={patch} skill={skill} />}
         <p className="mt-6 text-xs text-gray-500">
           Difficulty scores are analyst estimates from published topics, lab requirements and assessment signals. They are not official BRACU ratings.
           Prerequisites follow cse.bracu.ac.bd/course/list; always confirm in the official advising system.
@@ -67,7 +80,7 @@ export default function PlannerApp() {
       </Section>
 
       <Section id="roadmap" kicker="Step 3" title="Your road to graduation">
-        {ready && <Roadmap state={state} />}
+        {ready && <Roadmap state={state.target === 15 && !cgpaOk ? { ...state, target: 12 } : state} cgpaOk={cgpaOk} startSemester={semDone + 1} />}
       </Section>
     </div>
   );
