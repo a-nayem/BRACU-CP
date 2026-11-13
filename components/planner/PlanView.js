@@ -14,8 +14,8 @@ const META = {
   },
   heavy: {
     Icon: Flame, key: "heavy",
-    note: "Adds an extra course and accepts a load up to 9.0 to clear required courses fastest. Expect overlapping labs and exams and very little slack.",
-    words: ["fast track", "most credits", "high load", "little slack"],
+    note: "Keeps your credit target but accepts a load up to 9.0 to clear required courses fastest. Expect overlapping labs and exams and very little slack.",
+    words: ["fast track", "required first", "high load", "little slack"],
   },
   cg: {
     Icon: Target, key: "cg",
