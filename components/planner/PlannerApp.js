@@ -13,6 +13,31 @@ const PILL = "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1 t
 const PILL_ON = "border-brand-400 bg-brand-500/25 text-white";
 const PILL_OFF = "border-white/10 text-gray-400 hover:border-brand-400/50 hover:text-white";
 
+// Start menu: which semester the student is planning and which semester is the residential one (3rd or 4th, by seat status).
+function SemesterMenu({ state, patch }) {
+  const sems = Array.from({ length: 12 }, (_, i) => i + 1);
+  const pill = (on) => `${PILL} ${on ? PILL_ON : PILL_OFF}`;
+  return (
+    <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+      <p className="text-sm text-gray-300">Which semester are you planning for?</p>
+      <p className="mb-3 text-xs text-gray-500">This sets the semester numbers in Steps 2 and 3. It does not depend on credits, so repeats and retakes cannot throw it off.</p>
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Semester you are planning for">
+        {sems.map((n) => (
+          <button key={n} onClick={() => patch({ semester: state.semester === n ? null : n, edits: {} })} aria-pressed={state.semester === n} className={pill(state.semester === n)}>{n}</button>
+        ))}
+        {!state.semester && <span className="self-center pl-2 text-xs text-gray-500">Not picked, estimated from your completed credits.</span>}
+      </div>
+      <p className="mb-2 mt-5 text-sm text-gray-300">Residential semester</p>
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Residential semester">
+        {[[3, "3rd semester"], [4, "4th semester"]].map(([n, l]) => (
+          <button key={n} onClick={() => patch({ residential: state.residential === n ? null : n, edits: {} })} aria-pressed={state.residential === n} className={pill(state.residential === n)}>{l}</button>
+        ))}
+        <span className="self-center pl-2 text-xs text-gray-500">{state.residential ? "BNG103, HUM103 and EMB101 are planned in that semester if you have not taken them." : "Pick one if you know your seat status. Leave empty if you are not sure or have finished it."}</span>
+      </div>
+    </div>
+  );
+}
+
 const Section = ({ id, kicker, title, children }) => (
   <section id={id} className="scroll-mt-24 py-16">
     <p className="mb-2 text-sm uppercase tracking-[0.2em] text-brand-300">{kicker}</p>
@@ -25,11 +50,14 @@ export default function PlannerApp() {
   const { state, patch, reset, ready } = usePlannerState();
   const g = useMemo(() => cgpa(state.completed.filter((c) => state.grades[c]).map((c) => ({ code: c, grade: state.grades[c] }))), [state.completed, state.grades]);
   const skill = g.credits ? (g.cgpa - 3.0) * 0.3 : 0;
-  // Semesters already done are estimated at 12 credits each. Five courses need CGPA 3.5+ and are allowed from semester 6.
-  const semDone = useMemo(() => Math.round(progress(state.completed, COURSES, { eng102First: !!state.eng102First }).earned / 12), [state.completed, state.eng102First]);
+  // A failed (F) course is not completed: it stays on the plan as a retake. Everything below Step 1 works from the passed courses only.
+  const passed = useMemo(() => state.completed.filter((c) => state.grades[c] !== "F"), [state.completed, state.grades]);
+  // The semester the student picked wins. Without a pick, finished semesters are estimated at 12 credits each. Five courses need CGPA 3.5+ and are allowed from semester 6.
+  const semDone = useMemo(() => (state.semester ? state.semester - 1 : Math.round(progress(passed, COURSES, { eng102First: !!state.eng102First }).earned / 12)), [state.semester, passed, state.eng102First]);
   const cgpaOk = g.credits > 0 && g.cgpa >= 3.5;
   const fiveNow = cgpaOk && semDone + 1 > 5;
-  const view = state.target === 15 && !fiveNow ? { ...state, target: 12 } : state;
+  const residentialNow = !!state.residential && semDone + 1 === state.residential;
+  const view = { ...state, completed: passed, residentialNow, ...(state.target === 15 && !fiveNow ? { target: 12 } : {}) };
 
   return (
     <div className="relative mx-auto max-w-7xl px-6 pb-8 pt-28 lg:px-12">
@@ -43,6 +71,7 @@ export default function PlannerApp() {
       </header>
 
       <Section id="cgpa" kicker="Step 1" title="What have you completed?">
+        <SemesterMenu state={state} patch={patch} />
         <CoursePicker state={state} patch={patch} />
       </Section>
 
@@ -80,7 +109,7 @@ export default function PlannerApp() {
       </Section>
 
       <Section id="roadmap" kicker="Step 3" title="Your road to graduation">
-        {ready && <Roadmap state={state.target === 15 && !cgpaOk ? { ...state, target: 12 } : state} cgpaOk={cgpaOk} startSemester={semDone + 1} />}
+        {ready && <Roadmap state={{ ...view, ...(state.target === 15 && !cgpaOk ? { target: 12 } : { target: state.target }) }} cgpaOk={cgpaOk} startSemester={semDone + 1} residential={state.residential} />}
       </Section>
     </div>
   );
