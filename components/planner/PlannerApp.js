@@ -13,7 +13,8 @@ const PILL = "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1 t
 const PILL_ON = "border-brand-400 bg-brand-500/25 text-white";
 const PILL_OFF = "border-white/10 text-gray-400 hover:border-brand-400/50 hover:text-white";
 
-// Start menu: which semester the student is planning and which semester is the residential one (3rd or 4th, by seat status).
+// Start menu: which semester the student is planning and which semester is the residential one (3rd, 4th or 5th, by seat status).
+// The residential semester cannot be picked as the planning semester.
 function SemesterMenu({ state, patch }) {
   const sems = Array.from({ length: 12 }, (_, i) => i + 1);
   const pill = (on) => `${PILL} ${on ? PILL_ON : PILL_OFF}`;
@@ -23,14 +24,16 @@ function SemesterMenu({ state, patch }) {
       <p className="mb-3 text-xs text-gray-500">This sets the semester numbers in Steps 2 and 3. It does not depend on credits, so repeats and retakes cannot throw it off.</p>
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Semester you are planning for">
         {sems.map((n) => (
-          <button key={n} onClick={() => patch({ semester: state.semester === n ? null : n, edits: {} })} aria-pressed={state.semester === n} className={pill(state.semester === n)}>{n}</button>
+          <button key={n} disabled={state.residential === n} title={state.residential === n ? "This is your residential semester" : undefined}
+            onClick={() => patch({ semester: state.semester === n ? null : n, edits: {} })} aria-pressed={state.semester === n}
+            className={`${pill(state.semester === n)} ${state.residential === n ? "cursor-not-allowed opacity-30 line-through" : ""}`}>{n}</button>
         ))}
         {!state.semester && <span className="self-center pl-2 text-xs text-gray-500">Not picked, estimated from your completed credits.</span>}
       </div>
       <p className="mb-2 mt-5 text-sm text-gray-300">Residential semester</p>
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Residential semester">
-        {[[3, "3rd semester"], [4, "4th semester"]].map(([n, l]) => (
-          <button key={n} onClick={() => patch({ residential: state.residential === n ? null : n, edits: {} })} aria-pressed={state.residential === n} className={pill(state.residential === n)}>{l}</button>
+        {[[3, "3rd semester"], [4, "4th semester"], [5, "5th semester"]].map(([n, l]) => (
+          <button key={n} onClick={() => patch((s) => ({ residential: s.residential === n ? null : n, semester: s.semester === n ? null : s.semester, edits: {} }))} aria-pressed={state.residential === n} className={pill(state.residential === n)}>{l}</button>
         ))}
         <span className="self-center pl-2 text-xs text-gray-500">{state.residential ? "BNG103, HUM103 and EMB101 are planned in that semester if you have not taken them." : "Pick one if you know your seat status. Leave empty if you are not sure or have finished it."}</span>
       </div>
