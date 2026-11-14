@@ -33,9 +33,9 @@ function SemesterMenu({ state, patch }) {
       <p className="mb-2 mt-5 text-sm text-gray-300">Residential semester</p>
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Residential semester">
         {[[3, "3rd semester"], [4, "4th semester"], [5, "5th semester"]].map(([n, l]) => (
-          <button key={n} onClick={() => patch((s) => ({ residential: s.residential === n ? null : n, semester: s.semester === n ? null : s.semester, edits: {} }))} aria-pressed={state.residential === n} className={pill(state.residential === n)}>{l}</button>
+          <button key={n} onClick={() => patch((s) => ({ residential: s.residential === n ? null : n, semester: s.semester === n ? null : s.semester, edits: {} }))} aria-pressed={(state.residential || 3) === n} className={pill((state.residential || 3) === n)}>{l}</button>
         ))}
-        <span className="self-center pl-2 text-xs text-gray-500">{state.residential ? "BNG103, HUM103 and EMB101 are planned in that semester, plus ENG102 (if you did ENG101 first) or BU201 (if ENG102 is done)." : "Pick one if you know your seat status. Leave empty if you are not sure or have finished it."}</span>
+        <span className="self-center pl-2 text-xs text-gray-500">BNG103, HUM103, EMB101 and ENG102 (or BU201 if ENG102 is done) are planned only in that semester. It is the 3rd unless you pick the 4th or 5th.</span>
       </div>
     </div>
   );
@@ -59,8 +59,10 @@ export default function PlannerApp() {
   const semDone = useMemo(() => (state.semester ? state.semester - 1 : Math.round(progress(passed, COURSES, { eng102First: !!state.eng102First }).earned / 12)), [state.semester, passed, state.eng102First]);
   const cgpaOk = g.credits > 0 && g.cgpa >= 3.5;
   const fiveNow = cgpaOk && semDone + 1 > 5;
-  const residentialNow = !!state.residential && semDone + 1 === state.residential;
-  const residentialPending = !!state.residential && semDone + 1 < state.residential;
+  // The residential semester is the 3rd unless the student picked the 4th or 5th.
+  const resSem = state.residential || 3;
+  const residentialNow = semDone + 1 === resSem;
+  const residentialPending = semDone + 1 < resSem;
   const view = { ...state, completed: passed, residentialNow, residentialPending, ...(state.target === 15 && !fiveNow ? { target: 12 } : {}) };
 
   return (
@@ -113,7 +115,7 @@ export default function PlannerApp() {
       </Section>
 
       <Section id="roadmap" kicker="Step 3" title="Your road to graduation">
-        {ready && <Roadmap state={{ ...view, ...(state.target === 15 && !cgpaOk ? { target: 12 } : { target: state.target }) }} cgpaOk={cgpaOk} startSemester={semDone + 1} residential={state.residential} />}
+        {ready && <Roadmap state={{ ...view, ...(state.target === 15 && !cgpaOk ? { target: 12 } : { target: state.target }) }} cgpaOk={cgpaOk} startSemester={semDone + 1} residential={resSem} />}
       </Section>
     </div>
   );
