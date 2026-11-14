@@ -35,7 +35,7 @@ function SemesterMenu({ state, patch }) {
         {[[3, "3rd semester"], [4, "4th semester"], [5, "5th semester"]].map(([n, l]) => (
           <button key={n} onClick={() => patch((s) => ({ residential: s.residential === n ? null : n, semester: s.semester === n ? null : s.semester, edits: {} }))} aria-pressed={state.residential === n} className={pill(state.residential === n)}>{l}</button>
         ))}
-        <span className="self-center pl-2 text-xs text-gray-500">{state.residential ? "BNG103, HUM103 and EMB101 are planned in that semester if you have not taken them." : "Pick one if you know your seat status. Leave empty if you are not sure or have finished it."}</span>
+        <span className="self-center pl-2 text-xs text-gray-500">{state.residential ? "BNG103, HUM103 and EMB101 are planned in that semester, plus ENG102 (if you did ENG101 first) or BU201 (if ENG102 is done)." : "Pick one if you know your seat status. Leave empty if you are not sure or have finished it."}</span>
       </div>
     </div>
   );
@@ -60,7 +60,8 @@ export default function PlannerApp() {
   const cgpaOk = g.credits > 0 && g.cgpa >= 3.5;
   const fiveNow = cgpaOk && semDone + 1 > 5;
   const residentialNow = !!state.residential && semDone + 1 === state.residential;
-  const view = { ...state, completed: passed, residentialNow, ...(state.target === 15 && !fiveNow ? { target: 12 } : {}) };
+  const residentialPending = !!state.residential && semDone + 1 < state.residential;
+  const view = { ...state, completed: passed, residentialNow, residentialPending, ...(state.target === 15 && !fiveNow ? { target: 12 } : {}) };
 
   return (
     <div className="relative mx-auto max-w-7xl px-6 pb-8 pt-28 lg:px-12">
