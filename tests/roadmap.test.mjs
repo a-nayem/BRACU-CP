@@ -30,3 +30,11 @@ test("the residential semester holds the residential GenEd courses still missing
   for (const c of RESIDENTIAL_COURSES) assert.ok(taken.has(c) || sem.courses.includes(c), c);
   assert.deepEqual(residentialMust(new Set(RESIDENTIAL_COURSES)), []);
 });
+
+test("CSE470 comes before CSE471 in every roadmap", () => {
+  for (const [done, st] of [[[], 1], [start, 3]]) {
+    const plan = roadmap(done, 14, { targetCredits: 12, includeElectives: true, startSemester: st });
+    const at = (c) => plan.find((s) => s.courses.includes(c))?.semester;
+    if (at("CSE471") !== undefined) assert.ok(at("CSE470") < at("CSE471"), `start S${st}`);
+  }
+});
