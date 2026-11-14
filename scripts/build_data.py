@@ -61,6 +61,9 @@ _h=courses["HUM103"]
 courses["HUM-ELEC"]=dict(code="HUM-ELEC",name="Humanities course (one from the approved list)",credits=3,category="gened",group="GENED",stream=3,
   streamRule=_h.get("streamRule"),hard=[],soft=[],scores=dict(_h["scores"]),difficulty=_h["difficulty"],workbookDifficulty=None,notes=None,onOfficialList=True,
   choices=["HUM101","HUM102","HST102","HST103","HST104","HUM104","HUM110","HUM201","HUM207","HUM210","HUM301","ENG110","ENG113","ENG114","ENG115","ENG333"])
+# BU201 is taken in the residential semester by students who already did ENG102 (others take ENG102 there). Not a CST course.
+courses["BU201"]=dict(code="BU201",name="Community Engagement and Action",credits=3,category="gened",group="GENED",stream=None,streamRule=None,hard=[],soft=[],
+  scores=dict(math=1,conceptual=6,lab=1,syllabus=6,tricky=5,assignment=5),difficulty=3.95,workbookDifficulty=None,notes=None,onOfficialList=True,residentialOnly=True)
 # strip unconfirmed/verify wording from free-text fields
 import re as _re
 for c in courses.values():
