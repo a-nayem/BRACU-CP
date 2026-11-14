@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, Leaf, Flame, Target, Dices, X, Plus, ArrowLeftRight, AlertTriangle, AlertCircle, RotateCcw, Clock } from "lucide-react";
 import { COURSES } from "@/lib/data";
-import { planStrategies, verdict, unlockStats, prereqStatus, expectedGP, STRATEGIES, hiddenCodes } from "@/lib/engine";
+import { planStrategies, verdict, unlockStats, prereqStatus, expectedGP, STRATEGIES, hiddenCodes, residentialMust } from "@/lib/engine";
 import { Tag, TAG_BAR, DAYS } from "./shared";
 import CoursePanel from "./CoursePanel";
 
@@ -38,8 +38,8 @@ export default function PlanView({ state, patch, skill }) {
   const stats = useMemo(() => unlockStats(), []);
 
   const suggested = useMemo(
-    () => planStrategies({ completed, targetCredits: state.target, includeElectives: state.electives, skill, eng102First: !!state.eng102First, residentialNow: !!state.residentialNow }),
-    [completed, state.target, state.electives, skill, state.eng102First, state.residentialNow]
+    () => planStrategies({ completed, targetCredits: state.target, includeElectives: state.electives, skill, eng102First: !!state.eng102First, residentialNow: !!state.residentialNow, residentialPending: !!state.residentialPending }),
+    [completed, state.target, state.electives, skill, state.eng102First, state.residentialNow, state.residentialPending]
   );
   const planOf = (k) => state.edits[k] ?? suggested[k] ?? [];
   const info = useMemo(() => {
@@ -62,6 +62,14 @@ export default function PlanView({ state, patch, skill }) {
   // The side panel remembers the load when it opened, so its summary can show the change ("6.1 to 6.8").
   const openPanel = (mode, code) => setPanel({ mode, code, baseline: { index: cur.v.load.index, credits: cur.v.load.credits } });
   const hidden = useMemo(() => hiddenCodes(!!state.eng102First), [state.eng102First]);
+  // Residential courses (and BU201) are only offered in the residential semester itself.
+  const panelHidden = useMemo(() => {
+    const h = new Set(hidden);
+    const res = residentialMust(completed, COURSES, hidden, !!state.eng102First);
+    if (state.residentialPending) res.forEach((c) => h.add(c));
+    if (!state.residentialNow) h.add("BU201");
+    return h;
+  }, [hidden, completed, state.eng102First, state.residentialNow, state.residentialPending]);
 
   const slotOf = (code) => state.slots[code]?.[0] || { days: [], start: "", end: "" };
   const setSlot = (code, p) =>
@@ -230,7 +238,7 @@ export default function PlanView({ state, patch, skill }) {
         <CoursePanel
           mode={panel.mode} code={panel.code} baseline={panel.baseline}
           plan={cur.codes} verdict={cur.v} strategyLabel={STRATEGIES[active].label}
-          completed={completed} includeElectives={state.electives} hidden={hidden}
+          completed={completed} includeElectives={state.electives} hidden={panelHidden}
           onChange={(codes) => setPlan(active, codes)} onClose={() => setPanel(null)}
         />
       )}
