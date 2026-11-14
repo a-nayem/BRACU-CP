@@ -72,3 +72,12 @@ test("Step 2 follows the residential rules", () => {
   const pending = planStrategies({ completed: done, targetCredits: 12, residentialPending: true });
   for (const set of Object.values(pending)) for (const c of [...RESIDENTIAL_COURSES, "ENG102", "BU201"]) assert.ok(!set.includes(c), c);
 });
+
+test("helpful courses come before the courses they help, and semester 1 is fixed", () => {
+  for (const o of [{ residential: 3 }, { residential: 4, eng102First: true }]) {
+    const plan = roadmap([], 14, { targetCredits: 12, startSemester: 1, ...o });
+    const at = (c) => plan.find((s) => s.courses.includes(c))?.semester;
+    for (const c of Object.keys(COURSES)) for (const h of COURSES[c].helpedBy || []) if (at(c) && at(h)) assert.ok(at(h) < at(c), `${h} before ${c}`);
+    assert.deepEqual([...plan[0].courses].sort(), ["CSE110", "MAT110", o.eng102First ? "ENG102" : "ENG101", "PHY111"].sort());
+  }
+});
