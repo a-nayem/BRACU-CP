@@ -136,7 +136,6 @@ export default function CoursePicker({ state, patch }) {
           })}
           {!list.length && <li className="col-span-full p-4 text-center text-sm text-slate-500">No courses match.</li>}
         </ul>
-        <p className="mt-3 text-xs text-slate-500">Tap a course to mark it completed, then pick your grade as points and letter, for example 3.7 (A-). An F means the course is not passed and goes back into your plan as a retake. If you retook a course, mark it Retaken, enter your latest grade and the earlier one: the new grade replaces the old in your CGPA. Difficulty is an estimate from 1 to 10, not an official rating. HP is a hard prerequisite and SP is a soft one.</p>
       </div>
 
       <div className="min-w-0 space-y-4">
