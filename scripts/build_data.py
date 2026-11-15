@@ -6,12 +6,12 @@ wb=openpyxl.load_workbook(X,data_only=True)
 # HP = hard prerequisite, SP = soft prerequisite (assumed meanings, page does not define them)
 OFFICIAL={
 "CSE110":([],[]),"CSE111":(["CSE110"],[]),"CSE220":(["CSE111"],[]),"CSE221":(["CSE220"],[]),
-"CSE230":([],[]),"CSE250":([],["PHY112"]),"CSE251":(["CSE250"],[]),"CSE260":(["CSE251"],[]),
+"CSE230":([],[]),"CSE250":([],["PHY112"]),"CSE251":(["CSE250"],[]),"CSE260":([],[]),
 "CSE320":([],[]),"CSE321":(["CSE221"],["CSE340"]),"CSE330":(["MAT216"],[]),"CSE331":(["CSE221"],[]),
 "CSE340":(["CSE260"],[]),"CSE341":([],["CSE340"]),"CSE350":(["CSE251"],[]),"CSE360":(["CSE341"],[]),
 "CSE370":(["CSE221"],[]),"CSE400":([],[]),"CSE420":(["CSE321","CSE331","CSE340"],[]),
 "CSE421":([],["CSE320"]),"CSE422":(["CSE221"],[]),"CSE423":(["MAT216"],[]),"CSE460":(["CSE260"],[]),
-"CSE461":(["CSE260","CSE341","CSE360"],[]),"CSE470":(["CSE370"],[]),"CSE471":(["CSE370","CSE470"],[]),
+"CSE461":(["CSE260","CSE341","CSE360"],[]),"CSE470":(["CSE370"],[]),"CSE471":(["CSE470"],[]),
 }
 W=dict(m=.20,c=.20,l=.15,s=.15,t=.15,a=.15)
 def diff(m,c,l,s,t,a): return round(W['m']*m+W['c']*c+W['l']*l+W['s']*s+W['t']*t+W['a']*a,2)
