@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { COURSES } from "../lib/data.js";
-import { roadmap, residentialMust, RESIDENTIAL_COURSES, planStrategies, isGened } from "../lib/engine.js";
+import { roadmap, residentialMust, RESIDENTIAL_COURSES, planStrategies, isGened, levelOk } from "../lib/engine.js";
 
 const start = ["CSE110", "MAT110", "PHY111", "ENG101", "CSE111", "MAT120", "PHY112", "CSE230"];
 
@@ -79,5 +79,21 @@ test("helpful courses come before the courses they help, and semester 1 is fixed
     const at = (c) => plan.find((s) => s.courses.includes(c))?.semester;
     for (const c of Object.keys(COURSES)) for (const h of COURSES[c].helpedBy || []) if (at(c) && at(h)) assert.ok(at(h) < at(c), `${h} before ${c}`);
     assert.deepEqual([...plan[0].courses].sort(), ["CSE110", "MAT110", o.eng102First ? "ENG102" : "ENG101", "PHY111"].sort());
+  }
+});
+
+test("official prerequisites: CSE260 has none, CSE471 needs CSE470", () => {
+  assert.deepEqual(COURSES.CSE260.hard, []);
+  assert.deepEqual(COURSES.CSE471.hard, ["CSE470"]);
+});
+
+test("plan follows the course serial: 200s, then 300s, then 400s after 30 courses", () => {
+  for (const o of [{ residential: 3 }, { residential: 4, eng102First: true }]) {
+    const plan = roadmap([], 14, { targetCredits: 12, startSemester: 1, ...o });
+    const seen = new Set();
+    for (const sem of plan) {
+      for (const c of sem.courses) assert.ok(levelOk(c, seen, COURSES), `${c} in semester ${sem.semester}`);
+      sem.courses.forEach((c) => seen.add(c));
+    }
   }
 });
