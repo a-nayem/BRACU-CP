@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { makeBackup, parseBackup } from "../lib/backup.js";
 
-const state = { completed: ["CSE110", "MAT110", "CSE110"], grades: { CSE110: "A", MAT110: "F" }, retakes: { CSE110: "C" }, edits: { cg: ["CSE111"] }, slots: {}, target: 12, electives: true, eng102First: false, semester: 4, residential: 5 };
+const state = { completed: ["CSE110", "MAT110", "CSE110"], grades: { CSE110: "C", MAT110: "F" }, retakes: { CSE110: { to: "A", goal: "" } }, edits: { cg: ["CSE111"] }, slots: {}, target: 12, electives: true, eng102First: false, semester: 4, residential: 5 };
 
 test("export then import returns the same state", () => {
   const r = parseBackup(makeBackup(state));
@@ -31,4 +31,12 @@ test("unknown courses, grades and values are dropped", () => {
   assert.equal(r.state.semester, null);
   assert.equal(r.state.residential, null);
   assert.equal(r.state.electives, false);
+});
+
+test("v1 backups convert: grades was the new grade and retakes the earlier one", () => {
+  const v1 = JSON.stringify({ app: "bracu-cse-planner", v: 1, state: { completed: ["CSE110"], grades: { CSE110: "A" }, retakes: { CSE110: "C" } } });
+  const r = parseBackup(v1);
+  assert.equal(r.ok, true);
+  assert.equal(r.state.grades.CSE110, "C");
+  assert.deepEqual(r.state.retakes.CSE110, { to: "A", goal: "" });
 });
