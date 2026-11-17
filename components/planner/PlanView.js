@@ -38,8 +38,8 @@ export default function PlanView({ state, patch, skill }) {
   const stats = useMemo(() => unlockStats(), []);
 
   const suggested = useMemo(
-    () => planStrategies({ completed, targetCredits: state.target, includeElectives: state.electives, skill, eng102First: !!state.eng102First, residentialNow: !!state.residentialNow, residentialPending: !!state.residentialPending }),
-    [completed, state.target, state.electives, skill, state.eng102First, state.residentialNow, state.residentialPending]
+    () => planStrategies({ completed, targetCredits: state.target, includeElectives: state.electives, skill, eng102First: !!state.eng102First, residentialNow: !!state.residentialNow, residentialPending: !!state.residentialPending, retake: state.retake }),
+    [completed, state.target, state.electives, skill, state.eng102First, state.residentialNow, state.residentialPending, state.retake]
   );
   const planOf = (k) => state.edits[k] ?? suggested[k] ?? [];
   const info = useMemo(() => {
