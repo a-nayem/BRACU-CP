@@ -5,6 +5,7 @@ import { usePlannerState } from "@/lib/store";
 import { cgpa, progress } from "@/lib/engine";
 import { COURSES } from "@/lib/data";
 import { makeBackup, parseBackup } from "@/lib/backup";
+import { retakeInfo } from "@/lib/retake";
 import CoursePicker from "./CoursePicker";
 import PlanView from "./PlanView";
 import Roadmap from "./Roadmap";
@@ -95,10 +96,12 @@ const Section = ({ id, kicker, title, children }) => (
 
 export default function PlannerApp() {
   const { state, patch, reset, replace, ready } = usePlannerState();
-  const g = useMemo(() => cgpa(state.completed.filter((c) => state.grades[c]).map((c) => ({ code: c, grade: state.grades[c] }))), [state.completed, state.grades]);
+  // Effective grades: a new (retake) grade replaces the earlier one; an F is not passed and goes back into the plan as a repeat.
+  const info = useMemo(() => retakeInfo(state), [state.completed, state.grades, state.retakes]);
+  const g = useMemo(() => cgpa(info.records), [info]);
   const skill = g.credits ? (g.cgpa - 3.0) * 0.3 : 0;
   // A failed (F) course is not completed: it stays on the plan as a retake. Everything below Step 1 works from the passed courses only.
-  const passed = useMemo(() => state.completed.filter((c) => state.grades[c] !== "F"), [state.completed, state.grades]);
+  const passed = info.passed;
   // The semester the student picked wins. Without a pick, finished semesters are estimated at 12 credits each. Five courses need CGPA 3.5+ and are allowed from semester 6.
   const semDone = useMemo(() => (state.semester ? state.semester - 1 : Math.round(progress(passed, COURSES, { eng102First: !!state.eng102First }).earned / 12)), [state.semester, passed, state.eng102First]);
   const cgpaOk = g.credits > 0 && g.cgpa >= 3.5;
@@ -107,7 +110,7 @@ export default function PlannerApp() {
   const resSem = state.residential || 3;
   const residentialNow = semDone + 1 === resSem;
   const residentialPending = semDone + 1 < resSem;
-  const view = useMemo(() => ({ ...state, completed: passed, residentialNow, residentialPending, ...(state.target === 15 && !fiveNow ? { target: 12 } : {}) }), [state, passed, residentialNow, residentialPending, fiveNow]);
+  const view = useMemo(() => ({ ...state, completed: passed, residentialNow, residentialPending, retake: info.pending, ...(state.target === 15 && !fiveNow ? { target: 12 } : {}) }), [state, passed, residentialNow, residentialPending, fiveNow, info]);
   // Steps 2 and 3 are heavy to calculate. They follow a deferred copy so ticking a course in Step 1 responds at once and the plans catch up right after.
   const live = useMemo(() => ({ view, skill, cgpaOk, startSemester: semDone + 1, residential: resSem, target: state.target }), [view, skill, cgpaOk, semDone, resSem, state.target]);
   const lag = useDeferredValue(live);
@@ -128,7 +131,7 @@ export default function PlannerApp() {
       <Section id="cgpa" kicker="Step 1" title="What have you completed?">
         <BackupBar state={state} replace={replace} />
         <SemesterMenu state={state} patch={patch} />
-        <CoursePicker state={state} patch={patch} />
+        <CoursePicker state={state} patch={patch} info={info} />
       </Section>
 
       <Section id="plan" kicker="Step 2" title="Choose a plan for next semester">
