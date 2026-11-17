@@ -16,8 +16,8 @@ export default function Roadmap({ state, cgpaOk = false, startSemester = 1, resi
   const eng = !!state.eng102First;
   const completed = useMemo(() => new Set(state.completed), [state.completed]);
   const plan = useMemo(
-    () => roadmap(state.completed, 14, { targetCredits: state.target, includeElectives: state.electives, eng102First: eng, cgpaOk, startSemester, residential }),
-    [state.completed, state.target, state.electives, eng, cgpaOk, startSemester, residential]
+    () => roadmap(state.completed, 14, { targetCredits: state.target, includeElectives: state.electives, eng102First: eng, cgpaOk, startSemester, residential, retake: state.retake }),
+    [state.completed, state.target, state.electives, eng, cgpaOk, startSemester, residential, state.retake]
   );
   const prog = useMemo(() => progress(state.completed, COURSES, { eng102First: eng }), [state.completed, eng]);
   const left = [
@@ -28,7 +28,10 @@ export default function Roadmap({ state, cgpaOk = false, startSemester = 1, resi
     ["Project", prog.project.total - prog.project.done],
   ];
   const projectLeft = prog.project.missing.length > 0;
-  const planCredits = plan.reduce((n, s) => n + s.courses.reduce((m, c) => m + COURSES[c].credits, 0), 0) + (projectLeft ? DEGREE.project.reduce((n, c) => n + COURSES[c].credits, 0) : 0);
+  // Retakes of already passed courses fill slots but do not add credits toward the degree.
+  const improving = useMemo(() => new Set((state.retake || []).filter((c) => completed.has(c))), [state.retake, completed]);
+  const retakeSet = useMemo(() => new Set(state.retake || []), [state.retake]);
+  const planCredits = plan.reduce((n, s) => n + s.courses.reduce((m, c) => m + (improving.has(c) ? 0 : COURSES[c].credits), 0), 0) + (projectLeft ? DEGREE.project.reduce((n, c) => n + COURSES[c].credits, 0) : 0);
   let done = new Set(completed);
   return (
     <div>
@@ -63,7 +66,7 @@ export default function Roadmap({ state, cgpaOk = false, startSemester = 1, resi
                     <li key={c} className="flex gap-2">
                       <span className="w-16 shrink-0 font-mono text-xs text-brand-300">{c}</span>
                       <span className="min-w-0 flex-1 truncate text-gray-300" title={COURSES[c].name}>{COURSES[c].name}</span>
-                      <span className={`shrink-0 text-[10px] ${BUCKET_STYLE[b]}`}>{b}</span>
+                      {retakeSet.has(c) ? <span className="shrink-0 rounded-md border border-red-400/40 bg-red-500/10 px-1 text-[10px] text-red-300">{improving.has(c) ? "Retake" : "Repeat"}</span> : <span className={`shrink-0 text-[10px] ${BUCKET_STYLE[b]}`}>{b}</span>}
                     </li>
                   );
                 })}
