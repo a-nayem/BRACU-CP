@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import { COURSES, DEGREE } from "@/lib/data";
 import { progress, cgpa, GRADE_POINTS, hiddenCodes } from "@/lib/engine";
 import { GRADES } from "./shared";
+import RetakeBox from "./RetakeBox";
 
 const FILTERS = [
   ["all", "All"], ["core", "CSE core"], ["foundation", "Math and science"], ["gened", "GenEd"], ["elective", "Electives"],
@@ -11,7 +12,7 @@ const FILTERS = [
 const inFilter = (c, f) =>
   f === "all" ? true : f === "core" ? c.category === "core" || c.category === "project" : f === "foundation" ? c.group === "MATH" || c.group === "SCI" : f === "gened" ? c.group === "GENED" : c.category === "elective";
 
-export default function CoursePicker({ state, patch }) {
+export default function CoursePicker({ state, patch, info }) {
   const [q, setQ] = useState("");
   const [f, setF] = useState("core");
   const done = useMemo(() => new Set(state.completed), [state.completed]);
@@ -24,19 +25,15 @@ export default function CoursePicker({ state, patch }) {
         .sort((a, b) => a.code.localeCompare(b.code)),
     [q, f, hid]
   );
-  // An F is not a pass: the course stays open as a retake and its credits are not earned.
-  const passedList = useMemo(() => state.completed.filter((c) => state.grades[c] !== "F"), [state.completed, state.grades]);
-  const prog = useMemo(() => progress(passedList, COURSES, { eng102First: eng }), [passedList, eng]);
-  const retakes = state.retakes || {};
-  const records = useMemo(() => state.completed.filter((c) => state.grades[c]).map((c) => ({ code: c, grade: state.grades[c] })), [state.completed, state.grades]);
-  // Current CGPA: one grade per course, the latest attempt (a retake replaces the old grade). An F counts until it is retaken.
-  const gpa = useMemo(() => cgpa(records), [records]);
-  // Without the F courses: what the CGPA looks like once they are retaken and replaced. Used for the target estimate.
-  const gpaBase = useMemo(() => cgpa(records.filter((r) => r.grade !== "F")), [records]);
-  const failed = records.filter((r) => r.grade === "F");
-  const retaken = records.filter((r) => retakes[r.code] !== undefined && r.grade !== "F");
-  // Before the retakes: the same list with each retaken course at its earlier grade.
-  const gpaBefore = useMemo(() => (retaken.length ? cgpa(records.map((r) => (retakes[r.code] ? { ...r, grade: retakes[r.code] } : r))) : null), [records, retakes, retaken.length]);
+  // Everything works from the effective grade: a new (retake) grade replaces the earlier one, and an F is not passed.
+  const prog = useMemo(() => progress(info.passed, COURSES, { eng102First: eng }), [info, eng]);
+  // Current CGPA: one grade per course, the latest attempt. A pending repeat (F) still counts until it is replaced.
+  const gpa = useMemo(() => cgpa(info.records), [info]);
+  // Without the courses still to be repeated or retaken: the base for the target estimate, since their new grades will replace these.
+  const gpaBase = useMemo(() => cgpa(info.records.filter((r) => !info.pendingSet.has(r.code))), [info]);
+  const gpaBefore = useMemo(() => (info.replaced.length ? cgpa(info.beforeRecords) : null), [info]);
+  const gpaGoal = useMemo(() => (info.hasGoal ? cgpa(info.goalRecords) : null), [info]);
+  const failed = info.repeat;
   const [target, setTarget] = useState("3.5");
 
   const toggle = (code) =>
@@ -44,7 +41,8 @@ export default function CoursePicker({ state, patch }) {
 
   // Average grade point needed on the remaining credits to reach the target CGPA
   // Failed courses are replaced when retaken, so their credits move from the graded total to the remaining credits.
-  const remaining = prog.remaining;
+  // Retakes of passed courses are not in the remaining credits, but their new grade will replace the old one, so they count here.
+  const remaining = prog.remaining + info.credits(info.improve);
   const pts = gpaBase.cgpa * gpaBase.credits;
   const need = remaining > 0 && +target > 0 ? ((+target) * (gpaBase.credits + remaining) - pts) / remaining : null;
 
@@ -98,7 +96,7 @@ export default function CoursePicker({ state, patch }) {
                   </div>
                   <div className="mt-auto flex items-end justify-between gap-2 pt-3">
                     <span className="text-xs font-semibold text-slate-300" title="Estimated difficulty (1 to 10), not an official rating">{c.credits} cr &middot; difficulty {c.difficulty.toFixed(1)}</span>
-                    {on && state.grades[c.code] === "F" && <span className="rounded-md border border-red-400/40 bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-300">Retake needed</span>}
+                    {on && info.effective[c.code] === "F" && <span className="rounded-md border border-red-400/40 bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-300">Repeat needed</span>}
                     {on && (
                       <select
                         value={state.grades[c.code] || ""}
@@ -111,25 +109,6 @@ export default function CoursePicker({ state, patch }) {
                       </select>
                     )}
                   </div>
-                  {on && state.grades[c.code] && state.grades[c.code] !== "F" && (
-                    <div className="mt-2 flex items-center gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                      <button
-                        type="button" aria-pressed={retakes[c.code] !== undefined}
-                        onClick={() => patch((s) => { const r = { ...(s.retakes || {}) }; if (r[c.code] !== undefined) delete r[c.code]; else r[c.code] = ""; return { retakes: r }; })}
-                        className={`rounded-full border px-2.5 py-0.5 text-[11px] transition-colors ${retakes[c.code] !== undefined ? "border-brand-400 bg-brand-500/25 text-white" : "border-white/10 text-slate-400 hover:text-white"}`}
-                      >Retaken</button>
-                      {retakes[c.code] !== undefined && (
-                        <select
-                          value={retakes[c.code]} aria-label={`Earlier grade for ${c.code}`}
-                          onChange={(e) => patch((s) => ({ retakes: { ...(s.retakes || {}), [c.code]: e.target.value } }))}
-                          className="rounded-lg border border-white/10 bg-panel px-1.5 py-0.5 text-[11px] text-slate-200"
-                        >
-                          <option value="">Earlier grade</option>
-                          {GRADES.map((g) => <option key={g} value={g}>{GRADE_POINTS[g].toFixed(1)} ({g})</option>)}
-                        </select>
-                      )}
-                    </div>
-                  )}
                 </div>
               </li>
             );
@@ -158,12 +137,15 @@ export default function CoursePicker({ state, patch }) {
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
           <p className="text-sm text-slate-400">CGPA (graded courses)</p>
           <p className="text-4xl font-semibold text-white">{gpa.credits ? gpa.cgpa.toFixed(2) : "-"}</p>
-          <p className="text-xs text-slate-500">{gpa.credits} graded credits{failed.length > 0 ? `, includes ${failed.length} F until retaken` : ""}</p>
+          <p className="text-xs text-slate-500">{gpa.credits} graded credits{failed.length > 0 ? `, includes ${failed.length} F until repeated` : ""}</p>
           {gpaBefore && (
-            <p className="mt-1 text-xs text-slate-400">Retakes changed it from {gpaBefore.cgpa.toFixed(2)} to {gpa.cgpa.toFixed(2)}. Only the latest grade of a course counts.</p>
+            <p className="mt-1 text-xs text-slate-400">Repeats and retakes changed it from {gpaBefore.cgpa.toFixed(2)} to {gpa.cgpa.toFixed(2)}. Only the newest grade of a course counts.</p>
           )}
-          {failed.length > 0 && (
-            <p className="mt-1 text-xs text-red-300">To retake: {failed.map((r) => r.code).join(", ")} ({failed.reduce((n, r) => n + COURSES[r.code].credits, 0)} credits, planned again in Steps 2 and 3). Once retaken the F is replaced.</p>
+          {gpaGoal && (
+            <p className="mt-1 text-xs text-brand-300">If you reach your goal grades: {gpaGoal.cgpa.toFixed(2)}</p>
+          )}
+          {info.pending.length > 0 && (
+            <p className="mt-1 text-xs text-red-300">To take again: {info.pending.join(", ")} ({info.credits(info.pending)} credits, planned first in Steps 2 and 3). Credits are counted once, and the new grade replaces the earlier one.</p>
           )}
           <label className="mt-4 block text-sm text-slate-400" htmlFor="tgt">Target CGPA</label>
           <input id="tgt" type="number" step="0.05" min="0" max="4" value={target} onChange={(e) => setTarget(e.target.value)}
@@ -174,6 +156,8 @@ export default function CoursePicker({ state, patch }) {
             </p>
           )}
         </div>
+
+        <RetakeBox state={state} patch={patch} info={info} />
       </div>
     </div>
   );
