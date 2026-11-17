@@ -1,9 +1,10 @@
 "use client";
-import { useMemo } from "react";
-import { Check } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Check, Download, Upload } from "lucide-react";
 import { usePlannerState } from "@/lib/store";
 import { cgpa, progress } from "@/lib/engine";
 import { COURSES } from "@/lib/data";
+import { makeBackup, parseBackup } from "@/lib/backup";
 import CoursePicker from "./CoursePicker";
 import PlanView from "./PlanView";
 import Roadmap from "./Roadmap";
@@ -12,6 +13,49 @@ import Roadmap from "./Roadmap";
 const PILL = "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400";
 const PILL_ON = "border-brand-400 bg-brand-500/25 text-white";
 const PILL_OFF = "border-white/10 text-gray-400 hover:border-brand-400/50 hover:text-white";
+
+// Save and restore: nothing is saved automatically. The student exports a JSON file and imports it on their next visit or on another device.
+function BackupBar({ state, replace }) {
+  const [note, setNote] = useState(null); // { ok, text }
+  const exportJson = () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([makeBackup(state)], { type: "application/json" }));
+    a.download = `bracu-planner-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    setNote({ ok: true, text: "Backup downloaded. Import it on another device to continue there." });
+  };
+  const onFile = (e) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      const r = parseBackup(String(rd.result));
+      if (!r.ok) return setNote({ ok: false, text: r.error });
+      if (!confirm("Replace what is on screen with this backup?")) return;
+      replace(r.state);
+      setNote({ ok: true, text: `Imported ${r.summary.courses} completed ${r.summary.courses === 1 ? "course" : "courses"}, ${r.summary.grades} ${r.summary.grades === 1 ? "grade" : "grades"} and ${r.summary.retakes} ${r.summary.retakes === 1 ? "retake" : "retakes"}.` });
+    };
+    rd.onerror = () => setNote({ ok: false, text: "That file could not be read." });
+    rd.readAsText(f);
+  };
+  const btn = `${PILL} ${PILL_OFF}`;
+  return (
+    <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+      <p className="text-sm text-gray-300">Save and restore</p>
+      <p className="mb-3 text-xs text-gray-500">Nothing is saved on this computer or sent to a server. Export a JSON file before you leave and import it next time, on this or any other device.</p>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <button type="button" onClick={exportJson} className={btn}><Download className="h-3.5 w-3.5" aria-hidden="true" />Export JSON</button>
+        <label className={`${btn} cursor-pointer focus-within:ring-2 focus-within:ring-brand-400`} htmlFor="planner-import">
+          <Upload className="h-3.5 w-3.5" aria-hidden="true" />Import JSON
+          <input type="file" accept="application/json,.json" id="planner-import" className="sr-only" onChange={onFile} />
+        </label>
+        {note && <span role="status" className={`pl-2 text-xs ${note.ok ? "text-emerald-300" : "text-red-300"}`}>{note.text}</span>}
+      </div>
+    </div>
+  );
+}
 
 // Start menu: which semester the student is planning and which semester is the residential one (3rd, 4th or 5th, by seat status).
 // The residential semester cannot be picked as the planning semester.
@@ -50,7 +94,7 @@ const Section = ({ id, kicker, title, children }) => (
 );
 
 export default function PlannerApp() {
-  const { state, patch, reset, ready } = usePlannerState();
+  const { state, patch, reset, replace, ready } = usePlannerState();
   const g = useMemo(() => cgpa(state.completed.filter((c) => state.grades[c]).map((c) => ({ code: c, grade: state.grades[c] }))), [state.completed, state.grades]);
   const skill = g.credits ? (g.cgpa - 3.0) * 0.3 : 0;
   // A failed (F) course is not completed: it stays on the plan as a retake. Everything below Step 1 works from the passed courses only.
@@ -72,11 +116,12 @@ export default function PlannerApp() {
         <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">Your course planner</h1>
         <p className="mt-4 text-lg font-light text-gray-400">
           Tell us what you have finished, then compare four ways to build your next semester. Swap any course and the load and warnings update instantly.
-          Everything stays in this browser.
+          Nothing is saved on this computer: export a JSON file to keep your entries.
         </p>
       </header>
 
       <Section id="cgpa" kicker="Step 1" title="What have you completed?">
+        <BackupBar state={state} replace={replace} />
         <SemesterMenu state={state} patch={patch} />
         <CoursePicker state={state} patch={patch} />
       </Section>
@@ -101,7 +146,7 @@ export default function PlannerApp() {
             {state.electives && <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />}
             Include electives
           </button>
-          <button onClick={() => { if (confirm("Clear everything saved in this browser?")) reset(); }} className={`${PILL} border-white/10 text-gray-500 hover:border-red-400/40 hover:text-white`}>Clear saved data</button>
+          <button onClick={() => { if (confirm("Clear everything on screen?")) reset(); }} className={`${PILL} border-white/10 text-gray-500 hover:border-red-400/40 hover:text-white`}>Clear all entries</button>
         </div>
         <p className="-mt-4 mb-6 text-xs text-gray-500">
           4 courses (12 credits) is the normal load. 5 courses (15 credits) need a CGPA of 3.5 or higher and are only allowed from semester 6.
