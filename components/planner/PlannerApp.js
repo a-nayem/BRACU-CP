@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { Check, Download, Upload } from "lucide-react";
 import { usePlannerState } from "@/lib/store";
 import { cgpa, progress } from "@/lib/engine";
@@ -107,7 +107,12 @@ export default function PlannerApp() {
   const resSem = state.residential || 3;
   const residentialNow = semDone + 1 === resSem;
   const residentialPending = semDone + 1 < resSem;
-  const view = { ...state, completed: passed, residentialNow, residentialPending, ...(state.target === 15 && !fiveNow ? { target: 12 } : {}) };
+  const view = useMemo(() => ({ ...state, completed: passed, residentialNow, residentialPending, ...(state.target === 15 && !fiveNow ? { target: 12 } : {}) }), [state, passed, residentialNow, residentialPending, fiveNow]);
+  // Steps 2 and 3 are heavy to calculate. They follow a deferred copy so ticking a course in Step 1 responds at once and the plans catch up right after.
+  const live = useMemo(() => ({ view, skill, cgpaOk, startSemester: semDone + 1, residential: resSem, target: state.target }), [view, skill, cgpaOk, semDone, resSem, state.target]);
+  const lag = useDeferredValue(live);
+  const updating = lag !== live;
+  const roadState = useMemo(() => ({ ...lag.view, target: lag.target === 15 && !lag.cgpaOk ? 12 : lag.target }), [lag]);
 
   return (
     <div className="relative mx-auto max-w-7xl px-6 pb-8 pt-28 lg:px-12">
@@ -152,7 +157,7 @@ export default function PlannerApp() {
           4 courses (12 credits) is the normal load. 5 courses (15 credits) need a CGPA of 3.5 or higher and are only allowed from semester 6.
           {state.target === 15 && !fiveNow && cgpaOk ? ` You are planning semester ${semDone + 1}, so this plan uses 12 credits.` : ""}
         </p>
-        {ready && <PlanView state={view} patch={patch} skill={skill} />}
+        {ready && <div className={updating ? "opacity-60 transition-opacity" : "transition-opacity"} aria-busy={updating}><PlanView state={lag.view} patch={patch} skill={lag.skill} /></div>}
         <p className="mt-6 text-xs text-gray-500">
           Difficulty scores are analyst estimates from published topics, lab requirements and assessment signals. They are not official BRACU ratings.
           Prerequisites follow cse.bracu.ac.bd/course/list; always confirm in the official advising system.
@@ -160,7 +165,7 @@ export default function PlannerApp() {
       </Section>
 
       <Section id="roadmap" kicker="Step 3" title="Your road to graduation">
-        {ready && <Roadmap state={{ ...view, ...(state.target === 15 && !cgpaOk ? { target: 12 } : { target: state.target }) }} cgpaOk={cgpaOk} startSemester={semDone + 1} residential={resSem} />}
+        {ready && <div className={updating ? "opacity-60 transition-opacity" : "transition-opacity"} aria-busy={updating}><Roadmap state={roadState} cgpaOk={lag.cgpaOk} startSemester={lag.startSemester} residential={lag.residential} /></div>}
       </Section>
     </div>
   );
