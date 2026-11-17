@@ -43,4 +43,4 @@ export function CourseTags({ c, className = "mt-2 flex flex-wrap gap-1.5" }) {
 }
 
 export const DAYS =["Sat", "Sun", "Mon", "Tue", "Wed", "Thu"];
-export const GRADES = ["A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F"];
+export const GRADES = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F"];
