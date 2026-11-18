@@ -4,13 +4,13 @@ import { Search } from "lucide-react";
 import { COURSES, DEGREE } from "@/lib/data";
 import { progress, cgpa, GRADE_POINTS, hiddenCodes } from "@/lib/engine";
 import { GRADES } from "./shared";
-import RetakeBox from "./RetakeBox";
+import RetakeCards from "./RetakeBox";
 
 const FILTERS = [
-  ["all", "All"], ["core", "CSE core"], ["foundation", "Math and science"], ["gened", "GenEd"], ["elective", "Electives"],
+  ["all", "All"], ["core", "CSE core"], ["foundation", "Math and science"], ["gened", "GenEd"], ["elective", "Electives"], ["retake", "Repeat / retake"],
 ];
 const inFilter = (c, f) =>
-  f === "all" ? true : f === "core" ? c.category === "core" || c.category === "project" : f === "foundation" ? c.group === "MATH" || c.group === "SCI" : f === "gened" ? c.group === "GENED" : c.category === "elective";
+  f === "all" || f === "retake" ? true : f === "core" ? c.category === "core" || c.category === "project" : f === "foundation" ? c.group === "MATH" || c.group === "SCI" : f === "gened" ? c.group === "GENED" : c.category === "elective";
 
 export default function CoursePicker({ state, patch, info }) {
   const [q, setQ] = useState("");
@@ -25,6 +25,19 @@ export default function CoursePicker({ state, patch, info }) {
         .sort((a, b) => a.code.localeCompare(b.code)),
     [q, f, hid]
   );
+  // Repeat / retake tab: the search box finds a course to add; its card then appears in the list.
+  const retakeResults = useMemo(() => {
+    const n = q.trim().toLowerCase();
+    if (f !== "retake" || !n) return [];
+    const listed = Object.keys(state.retakes || {});
+    return Object.values(COURSES).filter((c) => !hid.has(c.code) && !c.residentialOnly && !listed.includes(c.code) && (c.code + " " + c.name).toLowerCase().includes(n)).sort((a, b) => a.code.localeCompare(b.code)).slice(0, 6);
+  }, [q, f, hid, state.retakes]);
+  const addRetake = (code) => {
+    patch((s) => ({ completed: s.completed.includes(code) ? s.completed : [...s.completed, code], retakes: { ...(s.retakes || {}), [code]: { to: "", goal: "" } } }));
+    setQ("");
+  };
+  const retakeCount = Object.keys(state.retakes || {}).length;
+
   // Everything works from the effective grade: a new (retake) grade replaces the earlier one, and an F is not passed.
   const prog = useMemo(() => progress(info.passed, COURSES, { eng102First: eng }), [info, eng]);
   // Current CGPA: one grade per course, the latest attempt. A pending repeat (F) still counts until it is replaced.
@@ -47,20 +60,20 @@ export default function CoursePicker({ state, patch, info }) {
   const need = remaining > 0 && +target > 0 ? ((+target) * (gpaBase.credits + remaining) - pts) / remaining : null;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+    <div className="grid items-start gap-6 lg:grid-cols-[1.5fr_1fr]">
       <div className="min-w-0 rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md">
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <div className="relative min-w-[200px] flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
             <input
-              value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search a code or name, e.g. CSE221"
+              value={q} onChange={(e) => setQ(e.target.value)} placeholder={f === "retake" ? "Add a course to repeat or retake, e.g. CSE220" : "Search a code or name, e.g. CSE221"}
               className="w-full rounded-xl border border-white/10 bg-sunken-2 py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-500 focus:border-brand-400 focus:outline-none"
-              aria-label="Search courses"
+              aria-label={f === "retake" ? "Add a repeat or retake course" : "Search courses"}
             />
           </div>
           <div className="flex flex-wrap gap-1.5">
             {FILTERS.map(([k, l]) => (
-              <button key={k} onClick={() => setF(k)} className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${f === k ? "border-brand-400 bg-brand-500/20 text-white" : "border-white/10 text-slate-400 hover:text-white"}`}>{l}</button>
+              <button key={k} onClick={() => setF(k)} className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${f === k ? "border-brand-400 bg-brand-500/20 text-white" : "border-white/10 text-slate-400 hover:text-white"}`}>{l}{k === "retake" && retakeCount > 0 ? ` (${retakeCount})` : ""}</button>
             ))}
           </div>
         </div>
@@ -71,7 +84,7 @@ export default function CoursePicker({ state, patch, info }) {
           {eng ? "Started with ENG102: ENG103 required, ENG101 not needed" : "I started with ENG102 in my first semester"}
         </button>
         <ul className="scroll-thin grid max-h-[34rem] grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
-          {list.map((c) => {
+          {f === "retake" ? <RetakeCards state={state} patch={patch} info={info} results={retakeResults} onAdd={addRetake} /> : list.map((c) => {
             const on = done.has(c.code);
             const hard = c.hard || [];
             const soft = c.soft || [];
@@ -113,7 +126,7 @@ export default function CoursePicker({ state, patch, info }) {
               </li>
             );
           })}
-          {!list.length && <li className="col-span-full p-4 text-center text-sm text-slate-500">No courses match.</li>}
+          {f !== "retake" && !list.length && <li className="col-span-full p-4 text-center text-sm text-slate-500">No courses match.</li>}
         </ul>
       </div>
 
@@ -157,7 +170,6 @@ export default function CoursePicker({ state, patch, info }) {
           )}
         </div>
 
-        <RetakeBox state={state} patch={patch} info={info} />
       </div>
     </div>
   );
