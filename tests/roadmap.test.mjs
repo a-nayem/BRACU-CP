@@ -97,3 +97,10 @@ test("plan follows the course serial: 200s, then 300s, then 400s after 30 course
     }
   }
 });
+
+test("a retake late in the degree still gets a full plan (extra semester holds only CSE400)", () => {
+  const done = ["CSE110", "MAT110", "PHY111", "ENG101", "CSE111", "MAT120", "PHY112", "CSE230", "CSE220", "CSE250", "CSE221", "CSE251", "CSE260", "CSE340", "CSE370"];
+  const plan = roadmap(done, 14, { targetCredits: 12, startSemester: 5, retake: ["CSE221"] });
+  assert.ok(plan.length > 0);
+  assert.equal(plan.flatMap((s) => s.courses).filter((c) => c === "CSE221").length, 1);
+});
